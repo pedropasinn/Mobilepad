@@ -8,6 +8,10 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.pedropasinn.mobilepad.input.GamepadInput
@@ -77,6 +81,9 @@ data class CustomButton(
     }
 }
 
+/** How long a latching button must be held to lock on. */
+const val LATCH_HOLD_MS = 400L
+
 /**
  * The layout's custom buttons, placed over the controller area ([w] × [h]). A latching button
  * shows a lit ring while it holds its output.
@@ -84,6 +91,10 @@ data class CustomButton(
 @Composable
 fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput, w: Dp, h: Dp, onSwap: () -> Unit = {}) {
     val latched = remember { mutableStateMapOf<String, Boolean>() }
+    // Per button: the timer that latches it while held, and whether this press only released it.
+    val timers = remember { mutableMapOf<String, Job>() }
+    val releasing = remember { mutableSetOf<String>() }
+    val scope = rememberCoroutineScope()
     for (b in buttons) {
         val on = latched[b.id] == true
         PadButton(
@@ -97,10 +108,20 @@ fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput
                         onSwap()
                     }
                 } else if (b.latch) {
+                    // A tap is an ordinary press; held for LATCH_HOLD_MS it locks on and stays held
+                    // after release. A tap on a locked button lets it go.
                     if (down) {
-                        val now = !(latched[b.id] ?: false)
-                        latched[b.id] = now
-                        b.out.press(input, now)
+                        if (latched[b.id] == true) {
+                            latched[b.id] = false
+                            releasing += b.id
+                            b.out.press(input, false)
+                        } else {
+                            b.out.press(input, true)
+                            timers[b.id] = scope.launch { delay(LATCH_HOLD_MS); latched[b.id] = true }
+                        }
+                    } else {
+                        timers.remove(b.id)?.cancel()
+                        if (!releasing.remove(b.id) && latched[b.id] != true) b.out.press(input, false)
                     }
                 } else {
                     b.out.press(input, down)
