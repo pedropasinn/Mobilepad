@@ -9,4 +9,5 @@
     <string name="preset_mkw_caption">搖桿、可鎖定油門和賽車按鍵</string>
     <string name="custom_icon">圖示</string>
     <string name="layout_swap">切換配置</string>
+    <string name="stick_floating">浮動搖桿</string>
 </resources>

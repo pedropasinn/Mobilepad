@@ -9,4 +9,5 @@
     <string name="preset_mkw_caption">Analógico, acelerador com trava e botões de corrida</string>
     <string name="custom_icon">Ícone</string>
     <string name="layout_swap">Alternar layout</string>
+    <string name="stick_floating">Analógico flutuante</string>
 </resources>

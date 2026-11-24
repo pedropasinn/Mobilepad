@@ -1,6 +1,7 @@
 package io.github.pedropasinn.mobilepad.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.AddCircle
@@ -210,6 +211,11 @@ fun PadLayoutEditor(
                     MiniSlider(str(R.string.layout_opacity), "${(t.alpha * 100).roundToInt()}%", t.alpha, 0.15f..1f, m) { set(t.copy(alpha = it)) }
                 }
                 val partActions: @Composable () -> Unit = {
+                    if (selected == PadPart.LSTICK || selected == PadPart.RSTICK) {
+                        IconButton(onClick = { set(t.copy(floating = !t.floating)) }) {
+                            Icon(Icons.Rounded.TouchApp, str(R.string.stick_floating), tint = if (t.floating) AccentBright else p.faint)
+                        }
+                    }
                     if (PadPart.canHide(selected)) {
                         IconButton(onClick = { set(t.copy(hidden = !t.hidden)) }) {
                             Icon(if (t.hidden) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility, str(R.string.layout_visible),

@@ -21,6 +21,8 @@ data class ElementTweak(
     val scale: Float = 1f,
     val alpha: Float = 1f,
     val hidden: Boolean = false,
+    /** Sticks only: centred wherever the thumb lands in its half of the screen. */
+    val floating: Boolean = false,
 ) {
     val isDefault get() = this == ElementTweak()
 }
@@ -54,7 +56,7 @@ data class PadLayout(
      * buttons as JSON (older layouts have no second line).
      */
     fun encode(): String = tweaks.entries.joinToString(";") { (k, t) ->
-        "$k=${t.dx},${t.dy},${t.scale},${t.alpha},${if (t.hidden) 1 else 0}"
+        "$k=${t.dx},${t.dy},${t.scale},${t.alpha},${if (t.hidden) 1 else 0}" + if (t.floating) ",1" else ""
     } + if (buttons.isEmpty()) "" else "\n" + CustomButton.listToJson(buttons)
 
     companion object {
@@ -67,9 +69,9 @@ data class PadLayout(
             (s ?: "").split(';').mapNotNull { entry ->
                 val (k, v) = entry.split('=').takeIf { it.size == 2 } ?: return@mapNotNull null
                 val f = v.split(',')
-                if (f.size != 5) return@mapNotNull null
+                if (f.size != 5 && f.size != 6) return@mapNotNull null
                 runCatching {
-                    k to ElementTweak(f[0].toFloat(), f[1].toFloat(), f[2].toFloat(), f[3].toFloat(), f[4] == "1")
+                    k to ElementTweak(f[0].toFloat(), f[1].toFloat(), f[2].toFloat(), f[3].toFloat(), f[4] == "1", f.getOrNull(5) == "1")
                 }.getOrNull()
             }.toMap(),
         )
@@ -147,7 +149,7 @@ fun Modifier.tweak(key: String): Modifier {
         .graphicsLayer {
             scaleX = t.scale
             scaleY = t.scale
-            alpha = if (t.hidden) 0.25f else t.alpha
+            alpha = if (t.hidden) 0.25f else if (t.floating && !scope.editing) t.alpha * 0.35f else t.alpha
         }
         .then(if (scope.editing) Modifier.onGloballyPositioned { scope.bounds[key] = it.boundsInRoot() } else Modifier)
 }

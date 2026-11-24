@@ -273,6 +273,8 @@ private fun marioKart(b: PresetBuilder, w: Float, h: Float, portrait: Boolean) {
         val s = 1.25f
         b.put(PadPart.LSTICK, 30f + stick.w * s / 2, h * 0.58f, s)
     }
+    // Steering where the thumb lands.
+    b.layout = b.layout.with(PadPart.LSTICK, b.layout[PadPart.LSTICK].copy(floating = true))
     b.buttons = if (portrait) listOf(
         CustomButton("mkw_gas", "ACELERAR", CustomOut.A, 0.78f, 0.80f, 104f, latch = true, icon = "gas"),
         CustomButton("mkw_drift", "DRIFT", CustomOut.RT, 0.56f, 0.88f, 78f, icon = "drift"),

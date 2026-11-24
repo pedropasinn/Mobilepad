@@ -202,6 +202,21 @@ fun Stick(
                 }
             },
     ) {
+        drawStick(s, knobArt, knob, held)
+    }
+}
+
+/**
+ * A stick's well and knob, [knob] being the knob's offset from the centre. Used by [Stick] and
+ * by the floating stick drawn where the thumb lands.
+ */
+internal fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStick(
+    s: Skin,
+    knobArt: androidx.compose.ui.graphics.ImageBitmap?,
+    knob: Offset,
+    held: Boolean,
+) {
+    run {
         val radius = min(this.size.width, this.size.height) / 2f
         // Recess: darker well, shaded at the top edge where the shell overhangs it.
         drawCircle(s.well, radius)
@@ -216,7 +231,7 @@ fun Stick(
         val c = center + knob
         if (knobArt != null) {
             drawImage(knobArt, dstOffset = IntOffset((c.x - k).toInt(), (c.y - k).toInt()), dstSize = IntSize((2 * k).toInt(), (2 * k).toInt()))
-            return@Canvas
+            return@run
         }
         drawCircle(s.shadow.copy(alpha = 0.45f), k, c + Offset(0f, k * 0.12f))
         drawCircle(
@@ -359,7 +374,7 @@ object TouchDispatch {
 private val unbufferedHolders = java.util.WeakHashMap<View, Int>()
 
 @Composable
-private fun UnbufferedTouch() {
+internal fun UnbufferedTouch() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !TouchDispatch.unbuffered) return
     val view = LocalView.current
     DisposableEffect(view) {

@@ -9,4 +9,5 @@
     <string name="preset_mkw_caption">Stick, locking gas and race buttons</string>
     <string name="custom_icon">Icon</string>
     <string name="layout_swap">Switch layout</string>
+    <string name="stick_floating">Floating stick</string>
 </resources>

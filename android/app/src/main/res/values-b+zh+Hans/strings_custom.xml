@@ -9,4 +9,5 @@
     <string name="preset_mkw_caption">摇杆、可锁定油门和赛车按键</string>
     <string name="custom_icon">图标</string>
     <string name="layout_swap">切换布局</string>
+    <string name="stick_floating">浮动摇杆</string>
 </resources>

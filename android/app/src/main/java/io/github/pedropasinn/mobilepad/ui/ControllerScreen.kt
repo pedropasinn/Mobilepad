@@ -186,6 +186,17 @@ fun ControllerScreen(
                     MenuBlock(status, statusKind, link, recenter = steering || motionSensor, onMenu = { menuOpen = true }, onRecenter = onRecenter)
                 }
                 val portrait = maxHeight > maxWidth
+                // Floating sticks: their halves of the screen, under every control.
+                if (!editingLayout) {
+                    val lay = layoutScope.layout
+                    val base = if (maxHeight > maxWidth) (maxWidth * 0.40f).coerceAtMost(170.dp) else (maxHeight * 0.42f).coerceAtMost(190.dp)
+                    if (lay[PadPart.LSTICK].floating) FloatingStickZone(true, base * lay[PadPart.LSTICK].scale, { x, y ->
+                        input.touch { it.copy(leftX = ControllerState.axis(x), leftY = ControllerState.axis(y)) }
+                    })
+                    if (lay[PadPart.RSTICK].floating) FloatingStickZone(false, base * 0.85f * lay[PadPart.RSTICK].scale, { x, y ->
+                        input.touch { it.copy(rightX = ControllerState.axis(x), rightY = ControllerState.axis(y)) }
+                    })
+                }
                 if (portrait != portraitNow) { portraitNow = portrait; partBounds.clear(); selectedPart = null }
                 if (portrait) {
                     PortraitLayout(input, labels, maxWidth, menuBlock, ::button)

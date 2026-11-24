@@ -9,4 +9,5 @@
     <string name="preset_mkw_caption">Levetta, acceleratore bloccabile e tasti da gara</string>
     <string name="custom_icon">Icona</string>
     <string name="layout_swap">Cambia disposizione</string>
+    <string name="stick_floating">Levetta mobile</string>
 </resources>
