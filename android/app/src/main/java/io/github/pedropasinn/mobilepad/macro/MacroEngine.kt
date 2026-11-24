@@ -139,15 +139,15 @@ class MacroEngine(
 
     /**
      * Opens a radial menu (from the configuration or dynamic) without a combo, e.g. from an
-     * on-screen button. A [RadialMode.HOLD] menu stays open until [releaseRadial]; a
-     * [RadialMode.STICKY] one until A, B or a tap closes it. Returns false if [id] is unknown.
+     * on-screen button or the in-game menu. Nothing is being held, so it stays open, whatever its
+     * mode, until a slice, A, B or a tap closes it (or [releaseRadial]). Returns false if [id] is unknown.
      */
     fun openRadial(id: String): Boolean = open(id, null).also { publish() }
 
-    /** Ends a [RadialMode.HOLD] menu opened with [openRadial]: runs the highlighted slice or cancels. */
+    /** Ends a menu opened with [openRadial]: runs the highlighted slice or cancels. */
     fun releaseRadial() {
         val s = session ?: return
-        if (s.macro == null && !s.sticky) releaseHold()
+        if (s.macro == null) releaseHold()
         publish()
     }
 
@@ -273,9 +273,10 @@ class MacroEngine(
     private fun open(id: String, macro: Macro?): Boolean {
         val menu = resolve(id) ?: return false
         close()
-        // A hold wheel opened from the touchscreen cannot be aimed with the thumbs on its combo:
-        // it stays open until a slice is tapped, like a sticky one.
-        val sticky = menu.mode == RadialMode.STICKY || (macro != null && openedByTouch())
+        // A hold wheel opened from the touchscreen cannot be aimed with the thumbs on its combo,
+        // and one opened from a menu (no combo at all) has nothing being held: both stay open
+        // until a slice is tapped, like a sticky one.
+        val sticky = menu.mode == RadialMode.STICKY || macro == null || openedByTouch()
         session = Session(macro, sticky, mutableListOf(Level(id, menu, null)))
         ignoreAngle = null
         show(null)

@@ -18,6 +18,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -105,15 +108,30 @@ fun RadialMenuOverlay(
             )
         }
         if (view.sticky) {
-            // Face buttons by position: the south one is labelled B on a Nintendo layout.
-            val confirm = if (nintendoLayout) "B" else "A"
-            val cancel = if (nintendoLayout) "A" else "B"
+            // Face buttons by position, named as printed on the controller: south confirms, east goes back.
+            val (confirm, cancel) = when (ActiveButtonNames.value) {
+                ButtonNames.PLAYSTATION -> "✕" to "○"
+                ButtonNames.NINTENDO -> "B" to "A"
+                else -> if (nintendoLayout) "B" to "A" else "A" to "B"
+            }
+            // Beside the wheel, never over it: in landscape the wheel takes the whole height, so the
+            // hint sits in the free corner; in portrait there is room below.
+            val wide = maxWidth > maxHeight
+            val wheel = min(maxWidth, maxHeight) * (OUTER * 2)
             Text(
                 str(R.string.radial_hint, confirm, cancel, str(if (nested) R.string.radial_back else R.string.radial_close)),
                 color = p.muted,
                 fontSize = 13.sp,
+                lineHeight = 18.sp,
                 fontFamily = Rounded,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                modifier = (if (wide) {
+                    Modifier.align(Alignment.BottomStart).padding(16.dp).widthIn(max = ((maxWidth - wheel) / 2 - 32.dp).coerceAtLeast(80.dp))
+                } else {
+                    Modifier.align(Alignment.BottomCenter).padding(16.dp)
+                })
+                    // Its own plate, so the dimmed controls underneath do not show through the words.
+                    .background(Color(0xE6141220), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
             )
             if (onTap != null) {
                 val side = min(maxWidth, maxHeight) * (OUTER * 2)
