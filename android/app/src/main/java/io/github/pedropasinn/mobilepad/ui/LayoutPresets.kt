@@ -280,6 +280,7 @@ private fun marioKart(b: PresetBuilder, w: Float, h: Float, portrait: Boolean) {
         CustomButton("mkw_wheelie", "EMPINAR", CustomOut.UP, 0.80f, 0.62f, 60f, icon = "up"),
         CustomButton("mkw_brake", "FREAR", CustomOut.X, 0.92f, 0.93f, 52f, icon = "brake"),
         CustomButton("mkw_back", "TRÁS", CustomOut.B, 0.92f, 0.52f, 50f, icon = "rear"),
+        CustomButton("mkw_swap", "MENUS", CustomOut.SWAP, 0.90f, 0.06f, 42f, icon = "swap"),
     ) else listOf(
         CustomButton("mkw_gas", "ACELERAR", CustomOut.A, 0.86f, 0.64f, 112f, latch = true, icon = "gas"),
         CustomButton("mkw_drift", "DRIFT", CustomOut.RT, 0.70f, 0.78f, 86f, icon = "drift"),
@@ -287,6 +288,7 @@ private fun marioKart(b: PresetBuilder, w: Float, h: Float, portrait: Boolean) {
         CustomButton("mkw_wheelie", "EMPINAR", CustomOut.UP, 0.83f, 0.30f, 62f, icon = "up"),
         CustomButton("mkw_brake", "FREAR", CustomOut.X, 0.94f, 0.88f, 54f, icon = "brake"),
         CustomButton("mkw_back", "TRÁS", CustomOut.B, 0.56f, 0.24f, 52f, icon = "rear"),
+        CustomButton("mkw_swap", "MENUS", CustomOut.SWAP, 0.94f, 0.12f, 44f, icon = "swap"),
     )
 }
 

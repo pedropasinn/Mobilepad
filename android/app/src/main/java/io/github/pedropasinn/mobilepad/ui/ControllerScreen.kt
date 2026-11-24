@@ -51,6 +51,7 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.CenterFocusStrong
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Nfc
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.OpenWith
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.ScreenRotation
@@ -151,6 +152,8 @@ fun ControllerScreen(
     editingLayout: Boolean = false,
     onEditLayout: (() -> Unit)? = null,
     onEditLayoutDone: () -> Unit = {},
+    /** Switches to the other saved layout (race ⇄ menus); null hides the menu entry. */
+    onSwapLayout: (() -> Unit)? = null,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     // Back never leaves the controller by accident mid-game: it opens the pause menu, where
@@ -189,7 +192,7 @@ fun ControllerScreen(
                 } else {
                     LandscapeLayout(input, labels, maxHeight, menuBlock, ::button)
                 }
-                CustomButtonsLayer(layoutScope.layout.buttons, input, maxWidth, maxHeight)
+                CustomButtonsLayer(layoutScope.layout.buttons, input, maxWidth, maxHeight, onSwap = { onSwapLayout?.invoke() })
             }
 
             if (editingLayout) {
@@ -206,7 +209,7 @@ fun ControllerScreen(
                 RadialMenuOverlay(it, nintendoLayout = nintendoLayout, onTap = onRadialTap, onBack = onRadialBack)
             }
             AnimatedVisibility(menuOpen, enter = fadeIn(), exit = fadeOut()) {
-                ControllerMenu(status, statusKind, actions, macroConfig, onEditMacros, onOpenWheel, onEditLayout, onClose = { menuOpen = false })
+                ControllerMenu(status, statusKind, actions, macroConfig, onEditMacros, onOpenWheel, onEditLayout, onSwapLayout, onClose = { menuOpen = false })
             }
         }
     }
@@ -503,6 +506,7 @@ private fun ControllerMenu(
     onEditMacros: (() -> Unit)?,
     onOpenWheel: ((String) -> Unit)?,
     onEditLayout: (() -> Unit)?,
+    onSwapLayout: (() -> Unit)?,
     onClose: () -> Unit,
 ) {
     val p = LocalPalette.current
@@ -530,6 +534,7 @@ private fun ControllerMenu(
             val items = buildList {
                 add(Triple(Icons.Rounded.PlayArrow, Hue.GREEN, str(R.string.menu_resume)) to onClose)
                 onEditMacros?.let { add(Triple(Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros)) to { onClose(); it() }) }
+                onSwapLayout?.let { add(Triple(Icons.Rounded.SwapHoriz, Hue.ORANGE, str(R.string.layout_swap)) to { onClose(); it() }) }
                 onEditLayout?.let { add(Triple(Icons.Rounded.OpenWith, Hue.TEAL, str(R.string.layout_edit)) to { onClose(); it() }) }
                 a.onAmiibo?.let { add(Triple(Icons.Rounded.Nfc, Hue.GOLD, str(R.string.nav_amiibo)) to { onClose(); it() }) }
                 add(Triple(Icons.AutoMirrored.Rounded.Logout, Hue.ROSE, str(R.string.menu_leave)) to { onClose(); a.onDisconnect() })

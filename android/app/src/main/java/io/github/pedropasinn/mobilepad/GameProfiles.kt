@@ -21,11 +21,15 @@ data class GameProfile(
     val remap: String,
     val macros: String,
     val motion: String,
+    /** The other layouts (see Prefs.altLandscape). */
+    val altLand: String = "",
+    val altPort: String = "",
 ) {
     fun toJson(): JSONObject = JSONObject()
         .put("id", id).put("name", name).put("skin", skin).put("deltaSkin", deltaSkin)
         .put("layoutLand", layoutLand).put("layoutPort", layoutPort).put("buttonNames", buttonNames)
         .put("remap", remap).put("macros", macros).put("motion", motion)
+        .put("altLand", altLand).put("altPort", altPort)
 
     /** Same setup, whatever the name and id. */
     fun sameSetup(other: GameProfile) = copy(id = "", name = "") == other.copy(id = "", name = "")
@@ -35,6 +39,7 @@ data class GameProfile(
             o.optString("id"), o.optString("name"), o.optString("skin"), o.optString("deltaSkin"),
             o.optString("layoutLand"), o.optString("layoutPort"), o.optString("buttonNames"),
             o.optString("remap"), o.optString("macros"), o.optString("motion"),
+            o.optString("altLand"), o.optString("altPort"),
         )
 
         fun listToJson(list: List<GameProfile>): String = JSONArray().apply { list.forEach { put(it.toJson()) } }.toString()

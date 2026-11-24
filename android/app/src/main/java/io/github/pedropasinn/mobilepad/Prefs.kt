@@ -100,6 +100,14 @@ class Prefs(context: Context) {
         get() = prefs.getString(KEY_ACTIVE_PROFILE, null) ?: ""
         set(value) = prefs.edit().putString(KEY_ACTIVE_PROFILE, value).apply()
 
+    /** The other layout of each orientation, swapped in from the controller (e.g. menus ⇄ race). */
+    var altLandscape: io.github.pedropasinn.mobilepad.ui.PadLayout
+        get() = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(prefs.getString(KEY_ALT_LAND, null))
+        set(value) = prefs.edit().putString(KEY_ALT_LAND, value.encode()).apply()
+    var altPortrait: io.github.pedropasinn.mobilepad.ui.PadLayout
+        get() = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(prefs.getString(KEY_ALT_PORT, null))
+        set(value) = prefs.edit().putString(KEY_ALT_PORT, value.encode()).apply()
+
     /** App language: "" follows the system, otherwise a tag from MobilepadApp.LANGUAGES. */
     var language: String
         get() = prefs.getString(KEY_LANGUAGE, null) ?: ""
@@ -120,6 +128,8 @@ class Prefs(context: Context) {
         const val KEY_BUTTON_NAMES = "button_names"
         const val KEY_LAYOUT_LAND = "layout_land"
         const val KEY_LAYOUT_PORT = "layout_port"
+        const val KEY_ALT_LAND = "layout_alt_land"
+        const val KEY_ALT_PORT = "layout_alt_port"
         const val KEY_DELTA_SKIN = "delta_skin"
         const val KEY_LANGUAGE = "language"
         const val KEY_MOTION_HINT = "motion_hint"

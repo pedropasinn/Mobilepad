@@ -8,4 +8,5 @@
     <string name="preset_mkw">マリオカート Wii</string>
     <string name="preset_mkw_caption">スティック、ロック式アクセル、レース用ボタン</string>
     <string name="custom_icon">アイコン</string>
+    <string name="layout_swap">配置を切り替え</string>
 </resources>

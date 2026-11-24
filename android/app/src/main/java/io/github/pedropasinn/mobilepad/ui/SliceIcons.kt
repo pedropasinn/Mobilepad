@@ -113,6 +113,7 @@ object SliceIcons {
         "left" to Icons.Rounded.ArrowBack,
         "right" to Icons.Rounded.ArrowForward,
         "rear" to Icons.Rounded.FlipCameraAndroid,
+        "swap" to Icons.Rounded.SwapHoriz,
         "mount" to Icons.Rounded.Pets,
         "build" to Icons.Rounded.Build,
         "tool" to Icons.Rounded.Handyman,

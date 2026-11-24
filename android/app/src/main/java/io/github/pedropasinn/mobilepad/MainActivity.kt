@@ -90,6 +90,8 @@ class MainActivity : ComponentActivity() {
     private var layoutLand by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     private var layoutPort by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     private var editLayout by mutableStateOf(false)
+    private var altLand by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
+    private var altPort by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     /** Bumped when the Bluetooth name changes, so the panel reads it again. */
     private var btNameTick by mutableStateOf(0)
     private var profiles by mutableStateOf<List<GameProfile>>(emptyList())
@@ -241,6 +243,8 @@ class MainActivity : ComponentActivity() {
         deltaSkinId = prefs.deltaSkin
         remap = prefs.remap
         layoutLand = prefs.layoutLandscape
+        altLand = prefs.altLandscape
+        altPort = prefs.altPortrait
         profiles = prefs.profiles
         activeProfile = prefs.activeProfile
         buttonNames = prefs.buttonNames
@@ -347,7 +351,7 @@ class MainActivity : ComponentActivity() {
             }
             // While a profile is in use, whatever changes is saved into it.
             val motionNow by motion.settings.collectAsState()
-            androidx.compose.runtime.LaunchedEffect(activeProfile, skin, deltaSkinId, layoutLand, layoutPort, buttonNames, remap, macroConfig, motionNow) {
+            androidx.compose.runtime.LaunchedEffect(activeProfile, skin, deltaSkinId, layoutLand, layoutPort, altLand, altPort, buttonNames, remap, macroConfig, motionNow) {
                 val current = profiles.firstOrNull { it.id == activeProfile } ?: return@LaunchedEffect
                 val now = snapshotProfile(current.id, current.name)
                 if (now != current) saveProfiles(profiles.map { if (it.id == current.id) now else it })
@@ -435,6 +439,7 @@ class MainActivity : ComponentActivity() {
                     },
                     editingLayout = editLayout,
                     onEditLayout = { editLayout = true },
+                    onSwapLayout = ::swapLayouts,
                     onEditLayoutDone = {
                         editLayout = false
                         if (editFromHome) { editFromHome = false; showPad = false }
@@ -588,7 +593,18 @@ class MainActivity : ComponentActivity() {
     private fun snapshotProfile(id: String, name: String) = GameProfile(
         id, name, skin.name, deltaSkinId, layoutLand.encode(), layoutPort.encode(), buttonNames.name,
         remap.entries.joinToString(",") { "${it.key}:${it.value}" }, macroConfig.toJson(), motion.settings.value.toJson(),
+        altLand.encode(), altPort.encode(),
     )
+
+    /** Swaps the layouts in use with the other ones (both orientations), e.g. race ⇄ menus. */
+    private fun swapLayouts() {
+        val l = layoutLand; val p = layoutPort
+        layoutLand = altLand; layoutPort = altPort
+        altLand = l; altPort = p
+        prefs.layoutLandscape = layoutLand; prefs.layoutPortrait = layoutPort
+        prefs.altLandscape = altLand; prefs.altPortrait = altPort
+        input.resetTouch()
+    }
 
     /** Puts a profile's whole setup to use and makes it the active one. */
     private fun applyProfile(p: GameProfile) {
@@ -596,6 +612,8 @@ class MainActivity : ComponentActivity() {
         deltaSkinId = p.deltaSkin; prefs.deltaSkin = deltaSkinId
         layoutLand = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(p.layoutLand); prefs.layoutLandscape = layoutLand
         layoutPort = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(p.layoutPort); prefs.layoutPortrait = layoutPort
+        altLand = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(p.altLand); prefs.altLandscape = altLand
+        altPort = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(p.altPort); prefs.altPortrait = altPort
         buttonNames = runCatching { io.github.pedropasinn.mobilepad.ui.ButtonNames.valueOf(p.buttonNames) }.getOrDefault(buttonNames); prefs.buttonNames = buttonNames
         remap = p.remap.split(',').mapNotNull { pair ->
             val (a, b) = pair.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null

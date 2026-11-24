@@ -22,11 +22,16 @@ enum class CustomOut(val label: String, val mask: Int = 0, val trigger: Int = 0)
     LT("LT", trigger = 1), RT("RT", trigger = 2),
     UP("↑", Buttons.DPAD_UP), DOWN("↓", Buttons.DPAD_DOWN), LEFT("←", Buttons.DPAD_LEFT), RIGHT("→", Buttons.DPAD_RIGHT),
     L3("L3", Buttons.LEFT_THUMB), R3("R3", Buttons.RIGHT_THUMB),
-    BACK("Back", Buttons.BACK), START("Start", Buttons.START);
+    BACK("Back", Buttons.BACK), START("Start", Buttons.START),
+    /** Not a pad button: switches to the other layout (e.g. race ⇄ menus). */
+    SWAP("⇄");
 
-    fun press(input: GamepadInput, down: Boolean) = when (trigger) {
-        1 -> input.touch { it.copy(leftTrigger = if (down) 255 else 0) }
-        2 -> input.touch { it.copy(rightTrigger = if (down) 255 else 0) }
+    val isSwap get() = this == SWAP
+
+    fun press(input: GamepadInput, down: Boolean) = when {
+        isSwap -> Unit
+        trigger == 1 -> input.touch { it.copy(leftTrigger = if (down) 255 else 0) }
+        trigger == 2 -> input.touch { it.copy(rightTrigger = if (down) 255 else 0) }
         else -> input.touch { it.with(mask, down) }
     }
 }
@@ -77,14 +82,21 @@ data class CustomButton(
  * shows a lit ring while it holds its output.
  */
 @Composable
-fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput, w: Dp, h: Dp) {
+fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput, w: Dp, h: Dp, onSwap: () -> Unit = {}) {
     val latched = remember { mutableStateMapOf<String, Boolean>() }
     for (b in buttons) {
         val on = latched[b.id] == true
         PadButton(
             b.label,
             { down ->
-                if (b.latch) {
+                if (b.out.isSwap) {
+                    if (down) {
+                        // Leaving this layout: let go of anything it latched.
+                        buttons.filter { latched[it.id] == true }.forEach { it.out.press(input, false) }
+                        latched.clear()
+                        onSwap()
+                    }
+                } else if (b.latch) {
                     if (down) {
                         val now = !(latched[b.id] ?: false)
                         latched[b.id] = now
