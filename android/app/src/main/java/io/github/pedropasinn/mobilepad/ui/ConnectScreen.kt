@@ -80,6 +80,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.material.icons.rounded.LinkOff
+import androidx.compose.material.icons.rounded.Sync
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -167,6 +174,7 @@ fun HomeScreen(
     onUsb: () -> Unit,
     onConnect: (String) -> Unit,
     onPlay: () -> Unit,
+    link: Link = Link.NONE,
     bluetooth: BluetoothPanel,
     controller: ControllerPanel,
     settings: SettingsPanel,
@@ -204,62 +212,43 @@ fun HomeScreen(
                 }
             }
         }
-        if (wide) {
-            Row(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout).padding(10.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Rail(sections, section) { onSection(it.ordinal) }
-                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    TopBar(status, statusKind, wide = true, onPlay)
-                    page(Modifier.weight(1f).fillMaxWidth())
-                }
-            }
-        } else {
-            Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)) {
-                TopBar(status, statusKind, wide = false, onPlay)
-                page(Modifier.weight(1f).fillMaxWidth())
-                BottomDock(sections, section) { onSection(it.ordinal) }
-            }
+        Column(
+            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)
+                .padding(horizontal = if (wide) 14.dp else 0.dp, vertical = if (wide) 6.dp else 0.dp),
+            verticalArrangement = Arrangement.spacedBy(if (wide) 8.dp else 0.dp),
+        ) {
+            TopBar(status, statusKind, link, wide, onPlay)
+            page(Modifier.weight(1f).fillMaxWidth())
+            BottomDock(sections, section, wide) { onSection(it.ordinal) }
         }
         controller.preview?.let { SkinPreviewDialog(it, controller.onPreviewDone) }
     }
 }
 
-/** Name and connection, the clock and battery when there is room, and the Play button. */
+/** How the phone is linked, for the status icon. */
+enum class Link { NONE, WIFI, USB, BLUETOOTH }
+
+/** The name on the left; connection, clock and battery together on the right. */
 @Composable
-private fun TopBar(status: String, statusKind: StatusKind, wide: Boolean, onPlay: () -> Unit) {
+private fun TopBar(status: String, statusKind: StatusKind, link: Link, wide: Boolean, onPlay: () -> Unit) {
     val p = LocalPalette.current
-    Column(Modifier.fillMaxWidth().padding(horizontal = if (wide) 0.dp else 14.dp, vertical = if (wide) 0.dp else 10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Mobilepad", color = p.text, fontSize = 22.sp, fontWeight = FontWeight.Black, fontFamily = Rounded)
-            if (wide) StatusPill(status, statusKind, Modifier.widthIn(max = 280.dp))
-            Spacer(Modifier.weight(1f))
-            if (wide) ClockPill()
-            PlayButton(onPlay)
-        }
-        if (!wide) StatusPill(status, statusKind)
-    }
-}
-
-/** The main action: opens the controller. */
-@Composable
-private fun PlayButton(onPlay: () -> Unit) {
     Row(
-        Modifier
-            .clip(PillShape)
-            .background(Brush.horizontalGradient(listOf(Color(0xFF9B6BFF), Color(0xFF6A2BE8))))
-            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.35f), Color.Transparent)), PillShape)
-            .clickable(onClick = onPlay)
-            .padding(horizontal = 16.dp, vertical = 9.dp),
+        Modifier.fillMaxWidth().padding(horizontal = if (wide) 4.dp else 16.dp, vertical = if (wide) 0.dp else 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Icon(Icons.Rounded.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp))
-        Text(str(R.string.play), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded)
+        Text("Mobilepad", color = p.text, fontSize = 22.sp, fontWeight = FontWeight.Black, fontFamily = Rounded)
+        Spacer(Modifier.weight(1f))
+        StatusCluster(status, statusKind, link, onPlay)
     }
 }
 
-/** Time and battery level, refreshed every 20 s. */
+/**
+ * One pill: an icon for the connection (coloured by its state), the time and the battery. Text
+ * only while connecting or after an error; connected, a tap goes back to the controller.
+ */
 @Composable
-private fun ClockPill() {
+private fun StatusCluster(status: String, kind: StatusKind, link: Link, onPlay: () -> Unit) {
     val context = LocalContext.current
     val p = LocalPalette.current
     var now by remember { mutableStateOf(Date()) }
@@ -273,55 +262,84 @@ private fun ClockPill() {
         }
     }
     val time = remember(now) { DateFormat.getTimeInstance(DateFormat.SHORT).format(now) }
+    val connected = kind == StatusKind.CONNECTED
+    val icon = when {
+        kind == StatusKind.ERROR -> Icons.Rounded.ErrorOutline
+        kind == StatusKind.BUSY -> Icons.Rounded.Sync
+        !connected -> Icons.Rounded.LinkOff
+        link == Link.USB -> Icons.Rounded.Usb
+        link == Link.BLUETOOTH -> Icons.Rounded.Bluetooth
+        else -> Icons.Rounded.Wifi
+    }
     Row(
-        Modifier.glass(PillShape).padding(horizontal = 14.dp, vertical = 8.dp),
+        Modifier
+            .glass(PillShape)
+            .then(if (connected) Modifier.clip(PillShape).clickable(onClick = onPlay) else Modifier)
+            .padding(start = 6.dp, end = 14.dp, top = 5.dp, bottom = 5.dp)
+            .semantics(mergeDescendants = true) { contentDescription = status },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        Box(
+            Modifier.size(28.dp).clip(CircleShape).background(statusColor(kind).copy(alpha = if (connected) 0.22f else 0.14f)),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, null, tint = if (kind == StatusKind.IDLE) p.muted else statusColor(kind), modifier = Modifier.size(17.dp)) }
+        if (kind == StatusKind.BUSY || kind == StatusKind.ERROR) {
+            Text(status, color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded,
+                maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
+        }
+        if (connected) Icon(Icons.Rounded.SportsEsports, null, tint = p.text, modifier = Modifier.size(18.dp).offset(x = (-4).dp))
+        Box(Modifier.width(1.dp).height(14.dp).background(p.outline))
         Text(time, color = p.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded)
         if (battery >= 0) {
-            Box(Modifier.width(1.dp).height(12.dp).background(p.outline))
-            Text("$battery%", color = p.muted, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded)
             val color = if (battery <= 20) Danger else Success
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.width(22.dp).height(11.dp).clip(RoundedCornerShape(3.dp)).border(1.5.dp, Muted, RoundedCornerShape(3.dp)).padding(2.dp)) {
-                    Box(Modifier.fillMaxWidth(battery.coerceIn(5, 100) / 100f).fillMaxSize().clip(RoundedCornerShape(1.dp)).background(color))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text("$battery%", color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.width(22.dp).height(11.dp).clip(RoundedCornerShape(3.dp)).border(1.5.dp, Muted, RoundedCornerShape(3.dp)).padding(2.dp)) {
+                        Box(Modifier.fillMaxWidth(battery.coerceIn(5, 100) / 100f).fillMaxSize().clip(RoundedCornerShape(1.dp)).background(color))
+                    }
+                    Box(Modifier.width(2.dp).height(5.dp).background(Muted))
                 }
-                Box(Modifier.width(2.dp).height(5.dp).background(Muted))
             }
         }
     }
 }
 
-/** Side navigation for landscape: every page with its name, always in sight. */
+/** Dock at the bottom, centred: icons, with the name of the page in view beside its icon. */
 @Composable
-private fun Rail(sections: List<Section>, current: Section, onSection: (Section) -> Unit) {
-    Column(
-        Modifier.fillMaxHeight().width(84.dp).glass(RoundedCornerShape(28.dp)).padding(vertical = 6.dp, horizontal = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        sections.forEach { s -> NavItem(s, current == s, Modifier.fillMaxWidth()) { onSection(s) } }
-    }
-}
-
-/** Bottom navigation for portrait. */
-@Composable
-private fun BottomDock(sections: List<Section>, current: Section, onSection: (Section) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp).glass(RoundedCornerShape(26.dp)).padding(horizontal = 4.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ) {
-        sections.forEach { s -> NavItem(s, current == s, Modifier.weight(1f)) { onSection(s) } }
+private fun BottomDock(sections: List<Section>, current: Section, wide: Boolean, onSection: (Section) -> Unit) {
+    Box(Modifier.fillMaxWidth().padding(bottom = if (wide) 0.dp else 10.dp), contentAlignment = Alignment.Center) {
+        Row(
+            Modifier.glass(RoundedCornerShape(26.dp)).padding(horizontal = 4.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (wide) 6.dp else 2.dp),
+        ) {
+            sections.forEach { s -> NavItem(s, current == s, Modifier, compact = true, roomy = wide) { onSection(s) } }
+        }
     }
 }
 
 @Composable
-private fun NavItem(section: Section, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun NavItem(section: Section, selected: Boolean, modifier: Modifier, compact: Boolean = false, roomy: Boolean = true, onClick: () -> Unit) {
     val p = LocalPalette.current
     val bg by animateColorAsState(if (selected) Color.White.copy(alpha = 0.10f) else Color.Transparent, label = "nav")
+    if (compact) {
+        // Landscape dock: icons, and the name of the page in view beside its icon.
+        Row(
+            modifier.clip(PillShape).background(bg).clickable(onClick = onClick)
+                .animateContentSize().padding(horizontal = if (roomy) 12.dp else 8.dp, vertical = 6.dp)
+                .semantics { contentDescription = str(section.label) },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            IconTile(section.icon, if (selected) section.hue else Hue.SLATE, if (roomy) 30.dp else 28.dp)
+            if (selected) Text(str(section.label), color = p.text, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,
+                fontFamily = Rounded, maxLines = 1, modifier = Modifier.padding(end = 4.dp))
+        }
+        return
+    }
     Column(
-        modifier.clip(RoundedCornerShape(18.dp)).background(bg).clickable(onClick = onClick).padding(vertical = 4.dp),
+        modifier.clip(RoundedCornerShape(18.dp)).background(bg).clickable(onClick = onClick).padding(vertical = if (compact) 3.dp else 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {

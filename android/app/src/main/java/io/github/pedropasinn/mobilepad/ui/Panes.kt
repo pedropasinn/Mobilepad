@@ -116,7 +116,7 @@ fun MasterDetail(
     if (wide) {
         val current = items.firstOrNull { it.key == selected && it.detail != null } ?: items.firstOrNull { it.detail != null }
         Row(modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            FadingColumn(Modifier.width(290.dp).fillMaxHeight(), spacing = 8.dp) {
+            FadingColumn(Modifier.width(290.dp).fillMaxHeight(), spacing = 6.dp) {
                 header?.invoke(this)
                 items.forEach { item ->
                     PaneRow(item, selected = item.key == current?.key, expandable = false) {
@@ -133,7 +133,7 @@ fun MasterDetail(
                 if (item?.detail != null) {
                     Column(Modifier.fillMaxSize().glass()) {
                         DetailHeader(item)
-                        FadingColumn(Modifier.fillMaxSize(), padding = 18.dp) { item.detail.invoke(this) }
+                        FadingColumn(Modifier.fillMaxSize(), padding = 16.dp) { item.detail.invoke(this) }
                     }
                 }
             }
@@ -167,12 +167,12 @@ fun MasterDetail(
 private fun DetailHeader(item: PaneItem) {
     val p = LocalPalette.current
     Row(
-        Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 16.dp, bottom = 4.dp),
+        Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 0.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        IconTile(item.icon, item.hue, 34.dp)
-        Text(item.title, color = p.text, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
+        IconTile(item.icon, item.hue, 28.dp)
+        Text(item.title, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
             modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
         item.trailing?.invoke()
     }
@@ -190,11 +190,11 @@ private fun PaneRow(
     val p = LocalPalette.current
     val base = if (flat) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().glass(RoundedCornerShape(18.dp), selected)
     Row(
-        base.clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        base.clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = if (flat) 10.dp else 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        IconTile(item.icon, item.hue, 38.dp)
+        IconTile(item.icon, item.hue, if (flat) 38.dp else 34.dp)
         Column(Modifier.weight(1f)) {
             Text(item.title, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
                 maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)

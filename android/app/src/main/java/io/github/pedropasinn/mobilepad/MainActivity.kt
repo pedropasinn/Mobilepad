@@ -430,6 +430,12 @@ class MainActivity : ComponentActivity() {
                     onUsb = { connection.connect(ConnectTarget.usb()) },
                     onConnect = ::connectTo,
                     onPlay = { showPad = true },
+                    link = when {
+                        btState is BluetoothGamepad.State.Connected -> io.github.pedropasinn.mobilepad.ui.Link.BLUETOOTH
+                        (status as? ConnectionStatus.Connected)?.target == "USB" -> io.github.pedropasinn.mobilepad.ui.Link.USB
+                        status is ConnectionStatus.Connected -> io.github.pedropasinn.mobilepad.ui.Link.WIFI
+                        else -> io.github.pedropasinn.mobilepad.ui.Link.NONE
+                    },
                     bluetooth = bluetoothPanel(btState),
                     controller = io.github.pedropasinn.mobilepad.ui.ControllerPanel(
                         builtIn = skin,
