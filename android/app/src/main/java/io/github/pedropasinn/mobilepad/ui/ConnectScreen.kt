@@ -154,6 +154,10 @@ class ControllerPanel(
     val layoutChanges: Int = 0,
     val onEditLayout: () -> Unit = {},
     val onResetLayout: () -> Unit = {},
+    /** Portrait layout, to tell which ready-made layout is in use. */
+    val portraitLayout: PadLayout = PadLayout(),
+    /** Applies a ready-made layout to both orientations. */
+    val onLayoutPreset: (landscape: PadLayout, portrait: PadLayout) -> Unit = { _, _ -> },
 )
 
 /** State and actions of the Settings page. */
@@ -537,7 +541,11 @@ private fun orientationName(o: ScreenOrientation) = when (o) {
  */
 @Composable
 private fun LayoutPane(c: ControllerPanel) {
-    c.style?.let { ControllerPreview(it, Modifier.fillMaxWidth().widthIn(max = 520.dp), layout = c.layout, onClick = c.onEditLayout) }
+    val screen = rememberPresetScreen()
+    c.style?.let {
+        ControllerPreview(it, Modifier.fillMaxWidth().widthIn(max = 520.dp), layout = c.layout, onClick = c.onEditLayout, screen = screen.landscape)
+        LayoutPresetPicker(it, screen, c.layout, c.portraitLayout, c.onLayoutPreset)
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
         Button(onClick = c.onEditLayout) {
             Icon(Icons.Rounded.OpenWith, null)

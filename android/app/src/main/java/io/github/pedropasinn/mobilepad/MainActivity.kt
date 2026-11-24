@@ -464,6 +464,11 @@ class MainActivity : ComponentActivity() {
                             layoutLand = io.github.pedropasinn.mobilepad.ui.PadLayout(); prefs.layoutLandscape = layoutLand
                             layoutPort = io.github.pedropasinn.mobilepad.ui.PadLayout(); prefs.layoutPortrait = layoutPort
                         },
+                        portraitLayout = layoutPort,
+                        onLayoutPreset = { land, port ->
+                            layoutLand = land; prefs.layoutLandscape = land
+                            layoutPort = port; prefs.layoutPortrait = port
+                        },
                     ),
                     settings = io.github.pedropasinn.mobilepad.ui.SettingsPanel(
                         theme = theme,

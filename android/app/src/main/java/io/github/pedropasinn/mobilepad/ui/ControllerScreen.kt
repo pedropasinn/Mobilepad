@@ -76,6 +76,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.github.pedropasinn.mobilepad.R
@@ -293,23 +294,30 @@ private fun BoxScope.LandscapeLayout(
 
 /**
  * The controller in miniature, exactly as it will look: the real landscape layout drawn at a phone
- * size (780 × 360 dp) and scaled to fit. Touches go to [onClick], never to the buttons.
+ * size ([screen], 780 × 360 dp unless known) and scaled to fit. Touches go to [onClick], never to
+ * the buttons.
  */
 @Composable
-fun ControllerPreview(style: SkinStyle, modifier: Modifier = Modifier, layout: PadLayout = PadLayout(), onClick: (() -> Unit)? = null) {
+fun ControllerPreview(
+    style: SkinStyle,
+    modifier: Modifier = Modifier,
+    layout: PadLayout = PadLayout(),
+    onClick: (() -> Unit)? = null,
+    screen: DpSize = DpSize(780.dp, 360.dp),
+) {
     val input = remember { GamepadInput() }
-    Box(modifier.aspectRatio(780f / 360f).clip(RoundedCornerShape(14.dp))) {
+    Box(modifier.aspectRatio(screen.width / screen.height).clip(RoundedCornerShape(14.dp))) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
-            val k = maxWidth / 780.dp
+            val k = maxWidth / screen.width
             CompositionLocalProvider(LocalSkin provides style.colors, LocalSkinParts provides style.parts, LocalPadLayout provides PadLayoutScope(layout, false, null)) {
                 Box(
                     Modifier
                         .wrapContentSize(Alignment.TopStart, unbounded = true)
-                        .requiredSize(780.dp, 360.dp)
+                        .requiredSize(screen)
                         .graphicsLayer { scaleX = k; scaleY = k; transformOrigin = TransformOrigin(0f, 0f) }
                         .background(Brush.verticalGradient(listOf(style.colors.shellTop, style.colors.shellBottom))),
                 ) {
-                    LandscapeLayout(input, XBOX, 360.dp, { MenuBlock("Mobilepad", StatusKind.CONNECTED, false, {}, {}) }) { { } }
+                    LandscapeLayout(input, XBOX, screen.height, { MenuBlock("Mobilepad", StatusKind.CONNECTED, false, {}, {}) }) { { } }
                 }
             }
         }

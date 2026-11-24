@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ready-made controller layouts (ui/LayoutPresets.kt). -->
+<resources>
+    <string name="preset_section">Ready-made layouts</string>
+    <string name="preset_default">Default</string>
+    <string name="preset_default_caption">As it comes</string>
+    <string name="preset_retro">Retro</string>
+    <string name="preset_retro_caption">Big D-pad and buttons</string>
+    <string name="preset_racing">Racing</string>
+    <string name="preset_racing_caption">Big triggers by the thumb</string>
+    <string name="preset_lefty">Left-handed</string>
+    <string name="preset_lefty_caption">Sides swapped</string>
+    <string name="preset_compact">Compact</string>
+    <string name="preset_compact_caption">Smaller, in the corners</string>
+    <string name="preset_minimal">Minimal</string>
+    <string name="preset_minimal_caption">See-through, no extras</string>
+    <string name="preset_replace_title">Replace your layout?</string>
+    <string name="preset_replace_text">The changes you made in the editor will be replaced by the “%1$s” layout.</string>
+    <string name="preset_replace">Replace</string>
+    <string name="preset_cancel">Cancel</string>
+</resources>
