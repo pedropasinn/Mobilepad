@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothHidDeviceAppSdpSettings
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import io.github.pedropasinn.mobilepad.lab.LabProbe
+import io.github.pedropasinn.mobilepad.lab.LabStage
 import io.github.pedropasinn.mobilepad.motion.MotionSample
 import io.github.pedropasinn.mobilepad.protocol.Buttons
 import io.github.pedropasinn.mobilepad.protocol.ControllerState
@@ -45,6 +47,8 @@ class SwitchProProfile(private val address: ByteArray) : HidProfile {
 
     @Volatile private var link: HidLink? = null
     @Volatile private var state = ControllerState.NEUTRAL
+    /** State packed in the last report built (for the Lab `send` probe). */
+    @Volatile private var reportedState = ControllerState.NEUTRAL
     @Volatile private var motion: MotionSample? = null
     private var timer = 0
     private var scheduler: ScheduledExecutorService? = null
@@ -126,7 +130,9 @@ class SwitchProProfile(private val address: ByteArray) : HidProfile {
 
     private fun send(reportId: Int, data: ByteArray) {
         try {
-            link?.send(reportId, data)
+            val sent = link?.send(reportId, data) == true
+            // Lab stage `send`: sendReport returned with the state packed in this report.
+            if (sent && LabProbe.enabled) LabProbe.record(LabStage.SEND, reportedState)
         } catch (e: Exception) {
             Log.w(TAG, "send failed", e)
         }
@@ -136,6 +142,7 @@ class SwitchProProfile(private val address: ByteArray) : HidProfile {
     @Synchronized
     private fun baseReport(): ByteArray {
         val s = state
+        reportedState = s
         val report = ByteArray(REPORT_SIZE)
         report[0] = (timer++ and 0xFF).toByte()
         report[1] = 0x90.toByte() // battery full, Pro Controller connection

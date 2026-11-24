@@ -24,11 +24,16 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -47,6 +52,10 @@ import io.github.pedropasinn.mobilepad.bt.GenericGamepadProfile
 import io.github.pedropasinn.mobilepad.bt.SwitchProProfile
 import io.github.pedropasinn.mobilepad.input.GamepadInput
 import io.github.pedropasinn.mobilepad.input.LatencyTest
+import io.github.pedropasinn.mobilepad.lab.LabAppInfo
+import io.github.pedropasinn.mobilepad.lab.LabHost
+import io.github.pedropasinn.mobilepad.lab.LabParams
+import io.github.pedropasinn.mobilepad.lab.LabRunner
 import io.github.pedropasinn.mobilepad.macro.MacroConfig
 import io.github.pedropasinn.mobilepad.macro.MacroEngine
 import io.github.pedropasinn.mobilepad.input.PhysicalGamepad
@@ -312,11 +321,23 @@ class MainActivity : ComponentActivity() {
         if (prefs.bluetoothEnabled && hasBluetoothPermission()) enableBluetooth()
         if (BuildConfig.DEBUG) applyTestExtras()
         startLatencyTest(intent)
+        LabRunner.busyElsewhere = { LatencyTest.running }
+        // A lab run keeps the screen on (leaving the foreground stops it).
+        lifecycleScope.launch {
+            LabRunner.active.collect { active ->
+                if (active) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                else if (!showPad) window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+        if (savedInstanceState == null) startLab(intent)
 
         setContent {
             io.github.pedropasinn.mobilepad.ui.MobilepadTheme(theme) {
                 // A new language rebuilds the screens, so every text is read again.
-                androidx.compose.runtime.key(language) { Screens() }
+                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxSize()) {
+                    androidx.compose.runtime.key(language) { Screens() }
+                    LabIndicator()
+                }
             }
         }
     }
@@ -555,6 +576,11 @@ class MainActivity : ComponentActivity() {
         refreshShizuku()
         hideSystemBars()
         motion.resume()
+    }
+
+    override fun onStop() {
+        LabRunner.cancel("app left the foreground")
+        super.onStop()
     }
 
     override fun onPause() {
@@ -838,11 +864,104 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         startLatencyTest(intent)
+        startLab(intent)
+    }
+
+    /** Small "Lab" tag at the top while a lab run drives the input. */
+    @androidx.compose.runtime.Composable
+    private fun androidx.compose.foundation.layout.BoxScope.LabIndicator() {
+        val active by LabRunner.active.collectAsState()
+        if (!active) return
+        androidx.compose.material3.Text(
+            "Lab",
+            modifier = androidx.compose.ui.Modifier
+                .align(androidx.compose.ui.Alignment.TopCenter)
+                .padding(top = 4.dp)
+                .background(androidx.compose.ui.graphics.Color(0x99000000), androidx.compose.foundation.shape.RoundedCornerShape(50))
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+            color = androidx.compose.ui.graphics.Color.White,
+            fontSize = 11.sp,
+        )
+    }
+
+    /** Lab inputs drive the app like a finger: touch path in, link out. */
+    private val labHost = object : LabHost {
+        @Volatile private var btHost: BluetoothDevice? = null
+        @Volatile private var wifiTarget: ConnectTarget? = null
+
+        override fun touch(state: ControllerState) = input.touch { state }
+
+        override fun release() = input.resetTouch()
+
+        override fun link(): String = when {
+            bluetooth.state.value is BluetoothGamepad.State.Connected -> "bt"
+            else -> (connection.status.value as? ConnectionStatus.Connected)?.let { if (it.target == "USB") "usb" else "wifi" } ?: "none"
+        }
+
+        override fun dropLink(link: String) {
+            if (link == "bt") {
+                btHost = bluetooth.connectedHost
+                runOnUiThread { bluetooth.disconnectHost() }
+            } else {
+                wifiTarget = connection.lastTarget
+                runOnUiThread { connection.disconnect() }
+            }
+        }
+
+        @android.annotation.SuppressLint("MissingPermission")
+        override fun restoreLink(link: String) {
+            if (link == "bt") btHost?.let { device -> runOnUiThread { bluetooth.connect(device) } }
+            else wifiTarget?.let { target -> runOnUiThread { connection.connect(target) } }
+        }
+    }
+
+    /**
+     * Mobilepad Lab run asked by the companion (labs/SPEC.md §4):
+     * `--ez lab true --es labTest <test> [--ei labCount N] [--el labSeed S] [--ei labRateHz R] [--ei labSeconds T] [--es labRun <id>]`.
+     * Output in `<external files>/lab/<labRun>/` (phone.csv, done.json).
+     */
+    private fun startLab(intent: Intent?) {
+        if (intent?.getBooleanExtra("lab", false) != true) return
+        intent.removeExtra("lab") // a recreated activity must not start it again
+        @Suppress("DEPRECATION")
+        fun number(key: String): Number? = intent.extras?.get(key) as? Number
+        fun stringOrNumber(key: String): String? = intent.getStringExtra(key) ?: number(key)?.toString()
+        val test = intent.getStringExtra("labTest") ?: "latency"
+        val run = (intent.getStringExtra("labRun")
+            ?: (java.text.SimpleDateFormat("yyyyMMdd-HHmmss", java.util.Locale.US).format(java.util.Date()) + "-" + test))
+            .replace(Regex("[^A-Za-z0-9._-]"), "_")
+        val macroButtons = macroConfig.macros.fold(0) { m, x -> m or x.trigger.buttons }
+        val params = LabParams(
+            test = test,
+            run = run,
+            seed = (stringOrNumber("labSeed")?.toLongOrNull()) ?: System.nanoTime(),
+            count = stringOrNumber("labCount")?.toIntOrNull() ?: LabParams.defaultCount(test),
+            rateHz = stringOrNumber("labRateHz")?.toIntOrNull() ?: LabParams.defaultRate(test),
+            seconds = stringOrNumber("labSeconds")?.toIntOrNull() ?: 10,
+            // Macro triggers (combo hold-back, consumed buttons) and remapped buttons would alter the states.
+            avoidButtons = macroButtons or remap.keys.fold(0) { m, x -> m or x },
+            avoidLt = macroConfig.macros.any { it.trigger.leftTrigger },
+            avoidRt = macroConfig.macros.any { it.trigger.rightTrigger },
+        )
+        val info = LabAppInfo(
+            version = BuildConfig.VERSION_NAME,
+            versionCode = BuildConfig.VERSION_CODE.toLong(),
+            commit = BuildConfig.GIT_COMMIT,
+            device = "${Build.MANUFACTURER} ${Build.MODEL}",
+            android = Build.VERSION.RELEASE,
+            sdk = Build.VERSION.SDK_INT,
+        )
+        input.resetTouch()
+        val dir = java.io.File(getExternalFilesDir(null), "lab/$run")
+        LabRunner.start(labHost, params, info, dir) { _, message ->
+            runOnUiThread { toast("Lab: $message") }
+        }
     }
 
     /** Latency test asked by the PC tool (tools/latency): `--ez latency true [--ei latencyCount N]`. */
     private fun startLatencyTest(intent: Intent?) {
         if (intent?.getBooleanExtra("latency", false) != true) return
+        if (LabRunner.running) return
         input.resetTouch()
         LatencyTest.start(
             this, input, lifecycleScope, intent.getIntExtra("latencyCount", 200),

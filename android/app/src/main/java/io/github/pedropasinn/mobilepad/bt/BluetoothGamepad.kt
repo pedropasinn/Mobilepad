@@ -41,6 +41,9 @@ class BluetoothGamepad(private val context: Context) {
 
     private var hid: BluetoothHidDevice? = null
     private var host: BluetoothDevice? = null
+
+    /** Host currently connected, if any. */
+    val connectedHost: BluetoothDevice? get() = host
     private val prefs = context.getSharedPreferences("bluetooth", Context.MODE_PRIVATE)
 
     /**

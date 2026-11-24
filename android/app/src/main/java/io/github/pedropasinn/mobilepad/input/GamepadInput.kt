@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import io.github.pedropasinn.mobilepad.lab.LabProbe
+import io.github.pedropasinn.mobilepad.lab.LabStage
 import io.github.pedropasinn.mobilepad.protocol.ControllerState
 
 /**
@@ -51,7 +53,10 @@ class GamepadInput {
     @Synchronized
     private fun publish() {
         val merged = ControllerState.merge(ControllerState.merge(touch.value, physical.value), motion.value)
-        _merged.value = if (remap.isEmpty()) merged else merged.copy(buttons = remapButtons(merged.buttons, remap))
+        val out = if (remap.isEmpty()) merged else merged.copy(buttons = remapButtons(merged.buttons, remap))
+        _merged.value = out
+        // Lab stage `state` (labs/SPEC.md §3); off outside a lab run.
+        if (LabProbe.enabled) LabProbe.record(LabStage.STATE, out)
     }
 }
 

@@ -2,6 +2,8 @@ package io.github.pedropasinn.mobilepad.bt
 
 import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothHidDeviceAppSdpSettings
+import io.github.pedropasinn.mobilepad.lab.LabProbe
+import io.github.pedropasinn.mobilepad.lab.LabStage
 import io.github.pedropasinn.mobilepad.protocol.ControllerState
 
 /**
@@ -36,7 +38,9 @@ class GenericGamepadProfile : HidProfile {
         val report = HidDescriptor.gamepadReport(state)
         if (report.contentEquals(lastReport)) return
         lastReport = report
-        link.send(HidDescriptor.GAMEPAD_REPORT_ID, report)
+        val sent = link.send(HidDescriptor.GAMEPAD_REPORT_ID, report)
+        // Lab stage `send`: sendReport returned (off outside a lab run).
+        if (sent && LabProbe.enabled) LabProbe.record(LabStage.SEND, state)
     }
 
     override fun onKeys(modifiers: Int, keys: List<Int>) {

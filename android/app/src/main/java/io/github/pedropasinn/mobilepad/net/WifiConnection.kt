@@ -19,6 +19,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import io.github.pedropasinn.mobilepad.lab.LabProbe
+import io.github.pedropasinn.mobilepad.lab.LabStage
 import io.github.pedropasinn.mobilepad.macro.KeyboardState
 import io.github.pedropasinn.mobilepad.motion.MotionSample
 import io.github.pedropasinn.mobilepad.protocol.ControllerState
@@ -87,8 +89,13 @@ class WifiConnection(private val deviceId: Long) {
     @Volatile private var udp: DatagramSocket? = null
     private var session: Job? = null
 
+    /** Target of the last [connect] (kept after a disconnect, so the Lab can reconnect it). */
+    @Volatile var lastTarget: ConnectTarget? = null
+        private set
+
     fun connect(target: ConnectTarget) {
         disconnect()
+        lastTarget = target
         session = scope.launch {
             val label = target.toString()
             _status.value = ConnectionStatus.Connecting(label)
@@ -189,6 +196,8 @@ class WifiConnection(private val deviceId: Long) {
             val packet = Wire.frame(Wire.TYPE_STATE, sequence.getAndIncrement(), last.encode())
             try {
                 send(packet)
+                // Lab stage `send`: the bytes were handed to the socket (off outside a lab run).
+                if (LabProbe.enabled) LabProbe.record(LabStage.SEND, last)
                 statesSent.incrementAndGet()
             } catch (e: IOException) {
                 Log.w(TAG, "connessione $id: invio fallito", e)
