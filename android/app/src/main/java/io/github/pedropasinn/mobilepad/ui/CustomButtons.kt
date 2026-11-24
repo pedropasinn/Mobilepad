@@ -113,7 +113,7 @@ fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput
                 .size(b.size.dp),
             // A symbol (an arrow, a letter) is printed big; a word is fitted to the button.
             icon = SliceIcons.resolve(b.icon),
-            fontSize = if (SliceIcons.resolve(b.icon) != null) (b.size / 2.7f).toInt().coerceIn(16, 44) else if (b.label.length <= 2) (b.size / 2.4f).toInt().coerceIn(14, 34) else (b.size / 5.2f).toInt().coerceIn(10, 18),
+            fontSize = if (SliceIcons.resolve(b.icon) != null) (b.size / 1.9f - 4).toInt().coerceIn(16, 60) else if (b.label.length <= 2) (b.size / 2.4f).toInt().coerceIn(14, 34) else (b.size / 5.2f).toInt().coerceIn(10, 18),
             selected = on,
         )
     }
