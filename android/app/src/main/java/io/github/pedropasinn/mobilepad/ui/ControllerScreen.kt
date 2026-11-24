@@ -178,7 +178,7 @@ fun ControllerScreen(
                 .fillMaxSize()
                 .background(Brush.verticalGradient(listOf(shell.shellTop, shell.shellBottom))),
         ) {
-            BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)) {
+            BoxWithConstraints(Modifier.fillMaxSize().cutoutPadding()) {
                 val menuBlock: @Composable () -> Unit = {
                     MenuBlock(status, statusKind, link, recenter = steering || motionSensor, onMenu = { menuOpen = true }, onRecenter = onRecenter)
                 }

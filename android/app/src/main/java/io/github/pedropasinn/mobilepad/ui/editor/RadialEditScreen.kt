@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import io.github.pedropasinn.mobilepad.ui.cutoutPadding
 import io.github.pedropasinn.mobilepad.ui.scrollFade
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -254,7 +255,7 @@ fun RadialEditScreen(
     val screen = Modifier
         .fillMaxSize()
         .screenBackground()
-        .windowInsetsPadding(WindowInsets.displayCutout)
+        .cutoutPadding()
     if (narrow) {
         Column(
             screen.verticalScroll(rememberScrollState()).padding(16.dp),

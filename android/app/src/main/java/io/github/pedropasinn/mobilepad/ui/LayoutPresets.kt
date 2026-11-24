@@ -321,7 +321,9 @@ fun rememberPresetScreen(): PresetScreen {
     }
     val long = max(wDp, hDp).roundToInt().toFloat()
     val short = min(wDp, hDp).roundToInt().toFloat()
-    return remember(long, short, cutout) { PresetScreen.of(long, short, if (cutout > 0f) cutout else 24f) }
+    // A small camera hole takes no room (the controller does not pad it): keep just a thin margin.
+    val small = rememberSmallCutout()
+    return remember(long, short, cutout, small) { PresetScreen.of(long, short, if (small) 8f else if (cutout > 0f) cutout else 24f) }
 }
 
 // ---------------------------------------------------------------- Picker

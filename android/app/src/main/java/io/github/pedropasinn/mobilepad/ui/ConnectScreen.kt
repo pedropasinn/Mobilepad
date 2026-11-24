@@ -232,7 +232,7 @@ fun HomeScreen(
             }
         }
         Column(
-            Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)
+            Modifier.fillMaxSize().cutoutPadding()
                 .padding(horizontal = if (wide) 14.dp else 0.dp, vertical = if (wide) 6.dp else 0.dp),
             verticalArrangement = Arrangement.spacedBy(if (wide) 8.dp else 0.dp),
         ) {
@@ -242,7 +242,7 @@ fun HomeScreen(
         }
         // Portrait: the dock takes the width, so the button floats just above its right end.
         if (!wide) {
-            Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout).padding(end = 16.dp, bottom = 86.dp), contentAlignment = Alignment.BottomEnd) {
+            Box(Modifier.fillMaxSize().cutoutPadding().padding(end = 16.dp, bottom = 86.dp), contentAlignment = Alignment.BottomEnd) {
                 ControllerButton(onPlay)
             }
         }

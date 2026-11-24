@@ -50,7 +50,7 @@ fun MacroEditorScreen(
         Modifier
             .fillMaxSize()
             .screenBackground()
-            .windowInsetsPadding(WindowInsets.displayCutout)
+            .cutoutPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

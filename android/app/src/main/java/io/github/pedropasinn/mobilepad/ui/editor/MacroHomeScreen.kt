@@ -67,6 +67,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import io.github.pedropasinn.mobilepad.ui.cutoutPadding
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -159,7 +160,7 @@ fun MacroHomeScreen(
         Modifier
             .fillMaxSize()
             .screenBackground()
-            .windowInsetsPadding(WindowInsets.displayCutout)
+            .cutoutPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
