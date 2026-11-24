@@ -65,6 +65,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TransformOrigin
@@ -119,6 +121,8 @@ fun ControllerScreen(
     nintendoLayout: Boolean = false,
     style: SkinStyle = builtInStyle(SkinId.VIOLET, ""),
     statusKind: StatusKind = StatusKind.IDLE,
+    /** How the phone is linked, shown as an icon under MENU. */
+    link: Link = Link.NONE,
     onDisconnect: () -> Unit,
     onRadialTap: (Int) -> Unit = {},
     onRadialBack: () -> Unit = {},
@@ -176,7 +180,7 @@ fun ControllerScreen(
         ) {
             BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)) {
                 val menuBlock: @Composable () -> Unit = {
-                    MenuBlock(status, statusKind, recenter = steering || motionSensor, onMenu = { menuOpen = true }, onRecenter = onRecenter)
+                    MenuBlock(status, statusKind, link, recenter = steering || motionSensor, onMenu = { menuOpen = true }, onRecenter = onRecenter)
                 }
                 val portrait = maxHeight > maxWidth
                 if (portrait != portraitNow) { portraitNow = portrait; partBounds.clear(); selectedPart = null }
@@ -209,7 +213,7 @@ fun ControllerScreen(
 
 /** MENU, the recenter shortcut while motion is on, and the status line. */
 @Composable
-private fun MenuBlock(status: String, statusKind: StatusKind, recenter: Boolean, onMenu: () -> Unit, onRecenter: () -> Unit) {
+private fun MenuBlock(status: String, statusKind: StatusKind, link: Link, recenter: Boolean, onMenu: () -> Unit, onRecenter: () -> Unit) {
     val shell = LocalSkin.current
     Column(Modifier.tweak(PadPart.MENU), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -224,10 +228,16 @@ private fun MenuBlock(status: String, statusKind: StatusKind, recenter: Boolean,
                 }
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Dot(statusColor(statusKind), 7.dp)
-            Text(status, color = shell.shellInk, fontSize = 11.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded,
-                maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // The connection as an icon: its kind, coloured by its state; the words stay for screen readers.
+        Box(
+            Modifier.size(24.dp).clip(CircleShape).background(shell.shellInk.copy(alpha = 0.12f))
+                .semantics { contentDescription = status },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                linkIcon(statusKind, link), null, modifier = Modifier.size(15.dp),
+                tint = if (statusKind == StatusKind.IDLE) shell.shellInk.copy(alpha = 0.6f) else statusColor(statusKind),
+            )
         }
     }
 }
@@ -318,7 +328,7 @@ fun ControllerPreview(
                         .graphicsLayer { scaleX = k; scaleY = k; transformOrigin = TransformOrigin(0f, 0f) }
                         .background(Brush.verticalGradient(listOf(style.colors.shellTop, style.colors.shellBottom))),
                 ) {
-                    LandscapeLayout(input, ActiveButtonNames.value.labels(), screen.height, { MenuBlock("Mobilepad", StatusKind.CONNECTED, false, {}, {}) }) { { } }
+                    LandscapeLayout(input, ActiveButtonNames.value.labels(), screen.height, { MenuBlock("Mobilepad", StatusKind.CONNECTED, Link.WIFI, false, {}, {}) }) { { } }
                 }
             }
         }

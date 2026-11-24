@@ -246,6 +246,16 @@ fun HomeScreen(
 /** How the phone is linked, for the status icon. */
 enum class Link { NONE, WIFI, USB, BLUETOOTH }
 
+/** The connection as one icon: its kind (Wi-Fi, USB, Bluetooth), or its trouble. */
+internal fun linkIcon(kind: StatusKind, link: Link) = when {
+    kind == StatusKind.ERROR -> Icons.Rounded.ErrorOutline
+    kind == StatusKind.BUSY -> Icons.Rounded.Sync
+    kind != StatusKind.CONNECTED -> Icons.Rounded.LinkOff
+    link == Link.USB -> Icons.Rounded.Usb
+    link == Link.BLUETOOTH -> Icons.Rounded.Bluetooth
+    else -> Icons.Rounded.Wifi
+}
+
 /** The name on the left; connection, clock and battery together on the right. */
 @Composable
 private fun TopBar(status: String, statusKind: StatusKind, link: Link, wide: Boolean, onPlay: () -> Unit) {
@@ -281,14 +291,7 @@ private fun StatusCluster(status: String, kind: StatusKind, link: Link, onPlay: 
     }
     val time = remember(now) { DateFormat.getTimeInstance(DateFormat.SHORT).format(now) }
     val connected = kind == StatusKind.CONNECTED
-    val icon = when {
-        kind == StatusKind.ERROR -> Icons.Rounded.ErrorOutline
-        kind == StatusKind.BUSY -> Icons.Rounded.Sync
-        !connected -> Icons.Rounded.LinkOff
-        link == Link.USB -> Icons.Rounded.Usb
-        link == Link.BLUETOOTH -> Icons.Rounded.Bluetooth
-        else -> Icons.Rounded.Wifi
-    }
+    val icon = linkIcon(kind, link)
     Row(
         Modifier
             .glass(PillShape)

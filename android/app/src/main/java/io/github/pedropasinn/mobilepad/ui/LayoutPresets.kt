@@ -65,7 +65,7 @@ data class PartBox(val x: Float, val y: Float, val w: Float, val h: Float) {
  */
 object PadGeometry {
     private const val MENU_W = 140f      // MENU pill + status line ("Mobilepad", a host name…)
-    private const val MENU_H = 47f       // pill 26 (name inside) + 6 + status 15
+    private const val MENU_H = 56f       // pill 26 (name inside) + 6 + link icon 24
     private const val SYSTEM_W = 152f    // widest set (PlayStation): 40 + 36 + 40 + 2 gaps of 18
     private const val SYSTEM_H = 40f     // tallest key (Xbox Guide)
     private const val WORDMARK_W = 108f
