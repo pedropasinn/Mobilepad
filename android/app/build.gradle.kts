@@ -7,6 +7,14 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Short hash of HEAD ("unknown" without git), for BuildConfig.GIT_COMMIT.
+val gitCommit: String = runCatching {
+    providers.exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim()
+}.getOrNull()?.takeIf { it.isNotEmpty() && it.all { c -> c.isLetterOrDigit() } } ?: "unknown"
+
 android {
     namespace = "io.github.pedropasinn.mobilepad"
     compileSdk = 36
@@ -17,6 +25,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        // Commit the app was built from, written by the Lab into done.json.
+        buildConfigField("String", "GIT_COMMIT", "\"$gitCommit\"")
     }
 
     // Release signing: keystore.properties (local, never committed) or environment variables (CI).

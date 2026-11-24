@@ -1,6 +1,7 @@
 package io.github.pedropasinn.mobilepad.input
 
 import android.content.Context
+import io.github.pedropasinn.mobilepad.lab.WallClock
 import io.github.pedropasinn.mobilepad.protocol.Buttons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,28 +50,5 @@ object LatencyTest {
             file.writeText(lines.toString())
             onDone(file)
         }
-    }
-
-    /**
-     * Wall clock with nanosecond steps: anchored on a millisecond edge of currentTimeMillis
-     * (found by spinning until it ticks), then advanced with nanoTime.
-     */
-    private class WallClock {
-        private val baseWallNs: Long
-        private val baseNano: Long
-
-        init {
-            val start = System.currentTimeMillis()
-            var now = start
-            var nano = System.nanoTime()
-            while (now == start) {
-                nano = System.nanoTime()
-                now = System.currentTimeMillis()
-            }
-            baseWallNs = now * 1_000_000L
-            baseNano = nano
-        }
-
-        fun nowNs() = baseWallNs + (System.nanoTime() - baseNano)
     }
 }
