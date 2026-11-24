@@ -146,7 +146,8 @@ enum class LayoutPreset(val title: Int, val caption: Int) {
     RACING(R.string.preset_racing, R.string.preset_racing_caption),
     LEFTY(R.string.preset_lefty, R.string.preset_lefty_caption),
     COMPACT(R.string.preset_compact, R.string.preset_compact_caption),
-    MINIMAL(R.string.preset_minimal, R.string.preset_minimal_caption);
+    MINIMAL(R.string.preset_minimal, R.string.preset_minimal_caption),
+    MARIO_KART(R.string.preset_mkw, R.string.preset_mkw_caption);
 
     /** [w] × [h]: the controller's area in that orientation, in dp. */
     fun build(w: Float, h: Float, portrait: Boolean): PadLayout {
@@ -158,6 +159,7 @@ enum class LayoutPreset(val title: Int, val caption: Int) {
             LEFTY -> lefty(b, w)
             COMPACT -> compact(b, w, h)
             MINIMAL -> minimal(b)
+            MARIO_KART -> marioKart(b, w, h, portrait)
         }
         return b.layout
     }
@@ -175,6 +177,9 @@ enum class LayoutPreset(val title: Int, val caption: Int) {
 
 private class PresetBuilder(val def: Map<String, PartBox>) {
     var layout = PadLayout()
+    var buttons: List<CustomButton>
+        get() = layout.buttons
+        set(value) { layout = layout.copy(buttons = value) }
 
     fun box(key: String) = def.getValue(key)
 
@@ -249,6 +254,40 @@ private fun racingPortrait(b: PresetBuilder, w: Float) {
     b.put(PadPart.LT, cx, row + half, trig)
     b.put(PadPart.FACE, scale = 0.85f)
     b.put(PadPart.DPAD, scale = 0.85f)
+}
+
+/**
+ * Mario Kart Wii (GameCube controller mapping in Dolphin: A gas, B brake, X look back, L item,
+ * R drift, D-pad up wheelie): only the left stick for the left thumb; on the right, a big
+ * latching gas pedal with drift, item and wheelie around it, small brake and look back.
+ */
+private fun marioKart(b: PresetBuilder, w: Float, h: Float, portrait: Boolean) {
+    b.hide(
+        PadPart.LT, PadPart.LB, PadPart.RB, PadPart.RT, PadPart.RSTICK, PadPart.DPAD,
+        PadPart.FACE, PadPart.L3, PadPart.R3, PadPart.SYSTEM, PadPart.WORDMARK,
+    )
+    val stick = b.box(PadPart.LSTICK)
+    if (portrait) {
+        b.put(PadPart.LSTICK, w * 0.27f, h * 0.70f, 1.15f)
+    } else {
+        val s = 1.25f
+        b.put(PadPart.LSTICK, 30f + stick.w * s / 2, h * 0.58f, s)
+    }
+    b.buttons = if (portrait) listOf(
+        CustomButton("mkw_gas", "ACELERAR", CustomOut.A, 0.78f, 0.80f, 104f, latch = true, icon = "gas"),
+        CustomButton("mkw_drift", "DRIFT", CustomOut.RT, 0.56f, 0.88f, 78f, icon = "drift"),
+        CustomButton("mkw_item", "ITEM", CustomOut.LT, 0.58f, 0.66f, 72f, icon = "item"),
+        CustomButton("mkw_wheelie", "EMPINAR", CustomOut.UP, 0.80f, 0.62f, 60f, icon = "up"),
+        CustomButton("mkw_brake", "FREAR", CustomOut.X, 0.92f, 0.93f, 52f, icon = "brake"),
+        CustomButton("mkw_back", "TRÁS", CustomOut.B, 0.92f, 0.52f, 50f, icon = "rear"),
+    ) else listOf(
+        CustomButton("mkw_gas", "ACELERAR", CustomOut.A, 0.86f, 0.64f, 112f, latch = true, icon = "gas"),
+        CustomButton("mkw_drift", "DRIFT", CustomOut.RT, 0.70f, 0.78f, 86f, icon = "drift"),
+        CustomButton("mkw_item", "ITEM", CustomOut.LT, 0.68f, 0.44f, 78f, icon = "item"),
+        CustomButton("mkw_wheelie", "EMPINAR", CustomOut.UP, 0.83f, 0.30f, 62f, icon = "up"),
+        CustomButton("mkw_brake", "FREAR", CustomOut.X, 0.94f, 0.88f, 54f, icon = "brake"),
+        CustomButton("mkw_back", "TRÁS", CustomOut.B, 0.56f, 0.24f, 52f, icon = "rear"),
+    )
 }
 
 /** Mirror image: movement on the right, buttons on the left. MENU and the centre stay put. */

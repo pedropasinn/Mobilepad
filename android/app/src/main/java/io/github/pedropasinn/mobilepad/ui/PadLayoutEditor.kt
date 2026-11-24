@@ -1,6 +1,9 @@
 package io.github.pedropasinn.mobilepad.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -167,6 +170,10 @@ fun PadLayoutEditor(
                 )
             }
             val finish: @Composable () -> Unit = {
+                IconButton(onClick = {
+                    val nb = CustomButton(CustomButton.newId(), str(R.string.custom_new_label), CustomOut.A, 0.5f, 0.55f)
+                    onChange(scope.layout.plusButton(nb)); onSelect(nb.key)
+                }) { Icon(Icons.Rounded.AddCircle, str(R.string.custom_add), tint = AccentBright) }
                 // Two taps: a stray touch must not wipe the whole layout.
                 if (confirmReset) {
                     androidx.compose.material3.TextButton(onClick = { confirmReset = false; onChange(PadLayout()); onSelect(null) }) {
@@ -195,7 +202,7 @@ fun PadLayoutEditor(
                 val t = scope.layout[selected]
                 fun set(n: ElementTweak) = onChange(scope.layout.with(selected, n))
                 val name: @Composable (Modifier) -> Unit = { m ->
-                    Text(str(PadPart.name(selected)), color = p.text, fontSize = if (narrow) 14.sp else 15.sp, lineHeight = 16.sp, fontWeight = FontWeight.Black, fontFamily = Rounded,
+                    Text(scope.layout.button(selected)?.label ?: str(PadPart.name(selected)), color = p.text, fontSize = if (narrow) 14.sp else 15.sp, lineHeight = 16.sp, fontWeight = FontWeight.Black, fontFamily = Rounded,
                         maxLines = if (narrow) 2 else 1, overflow = TextOverflow.Ellipsis, modifier = m)
                 }
                 val sliders: @Composable (Modifier) -> Unit = { m ->
@@ -228,6 +235,7 @@ fun PadLayoutEditor(
                         finish()
                     }
                 }
+                scope.layout.button(selected)?.let { cb -> CustomButtonRow(cb, { onChange(scope.layout.withButton(it)) }, { onChange(scope.layout.minusButton(cb.key)); onSelect(null) }) }
             }
         }
     }
@@ -254,5 +262,56 @@ private fun MiniSlider(
             modifier = Modifier.height(26.dp),
             colors = SliderDefaults.colors(thumbColor = AccentBright, activeTrackColor = Accent, inactiveTrackColor = p.surfaceHigh),
         )
+    }
+}
+
+/** Name, output and latch of a custom button, and a way to remove it. */
+@Composable
+private fun CustomButtonRow(b: CustomButton, onChange: (CustomButton) -> Unit, onDelete: () -> Unit) {
+    val p = LocalPalette.current
+    var outOpen by remember { mutableStateOf(false) }
+    var iconOpen by remember { mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().padding(start = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        androidx.compose.foundation.text.BasicTextField(
+            b.label, { onChange(b.copy(label = it.take(14))) }, singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(color = p.text, fontSize = 14.sp, fontFamily = Rounded, fontWeight = FontWeight.Bold),
+            cursorBrush = androidx.compose.ui.graphics.SolidColor(AccentBright),
+            modifier = Modifier.weight(1f).background(p.surfaceHigh, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 9.dp),
+        )
+        // Icon printed on the button (none: the name is printed).
+        Box {
+            IconButton(onClick = { iconOpen = true }) {
+                val ic = SliceIcons.resolve(b.icon)
+                if (ic != null) Icon(ic, str(R.string.custom_icon), tint = AccentBright)
+                else Text("Aa", color = AccentBright, fontFamily = Rounded, fontWeight = FontWeight.Black)
+            }
+            androidx.compose.material3.DropdownMenu(iconOpen, { iconOpen = false }, containerColor = Color(0xFF221E2E)) {
+                Box(Modifier.widthIn(max = 340.dp).padding(8.dp)) {
+                    io.github.pedropasinn.mobilepad.ui.editor.IconPicker(b.icon) { onChange(b.copy(icon = it)); iconOpen = false }
+                }
+            }
+        }
+        Box {
+            OutlinedButton(onClick = { outOpen = true }, contentPadding = PaddingValues(horizontal = 12.dp)) {
+                Text(str(R.string.custom_presses, b.out.label), fontFamily = Rounded, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+            androidx.compose.material3.DropdownMenu(outOpen, { outOpen = false }, containerColor = Color(0xFF221E2E)) {
+                CustomOut.entries.forEach { o ->
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(o.label, color = if (o == b.out) AccentBright else p.text, fontFamily = Rounded, fontWeight = FontWeight.Bold) },
+                        onClick = { onChange(b.copy(out = o)); outOpen = false },
+                    )
+                }
+            }
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(str(R.string.custom_latch), color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded)
+            AppSwitch(b.latch, { onChange(b.copy(latch = it)) })
+        }
+        IconButton(onClick = onDelete) { Icon(Icons.Rounded.Delete, str(R.string.custom_delete), tint = Danger) }
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_add">Adicionar botão</string>
+    <string name="custom_new_label">BOTÃO</string>
+    <string name="custom_presses">Aperta %1$s</string>
+    <string name="custom_latch">Travar</string>
+    <string name="custom_delete">Remover botão</string>
+    <string name="preset_mkw">Mario Kart Wii</string>
+    <string name="preset_mkw_caption">Analógico, acelerador com trava e botões de corrida</string>
+    <string name="custom_icon">Ícone</string>
+</resources>

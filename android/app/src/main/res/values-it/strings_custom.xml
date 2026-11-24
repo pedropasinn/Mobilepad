@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_add">Aggiungi tasto</string>
+    <string name="custom_new_label">TASTO</string>
+    <string name="custom_presses">Preme %1$s</string>
+    <string name="custom_latch">Blocca</string>
+    <string name="custom_delete">Rimuovi tasto</string>
+    <string name="preset_mkw">Mario Kart Wii</string>
+    <string name="preset_mkw_caption">Levetta, acceleratore bloccabile e tasti da gara</string>
+    <string name="custom_icon">Icona</string>
+</resources>

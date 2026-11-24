@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_add">新增按鍵</string>
+    <string name="custom_new_label">按鍵</string>
+    <string name="custom_presses">按下 %1$s</string>
+    <string name="custom_latch">鎖定</string>
+    <string name="custom_delete">移除按鍵</string>
+    <string name="preset_mkw">瑪利歐賽車 Wii</string>
+    <string name="preset_mkw_caption">搖桿、可鎖定油門和賽車按鍵</string>
+    <string name="custom_icon">圖示</string>
+</resources>

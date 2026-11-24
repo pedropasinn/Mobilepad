@@ -29,18 +29,41 @@ data class ElementTweak(
  * The user's layout for one orientation: tweaks over the built-in positions, keyed by element. An
  * empty layout is the default one.
  */
-data class PadLayout(val tweaks: Map<String, ElementTweak> = emptyMap()) {
+data class PadLayout(
+    val tweaks: Map<String, ElementTweak> = emptyMap(),
+    /** Buttons the user added (see [CustomButton]); their key in [tweaks] is "c:<id>". */
+    val buttons: List<CustomButton> = emptyList(),
+) {
     operator fun get(key: String) = tweaks[key] ?: ElementTweak()
 
-    fun with(key: String, t: ElementTweak) = PadLayout(if (t.isDefault) tweaks - key else tweaks + (key to t))
+    fun with(key: String, t: ElementTweak) = copy(tweaks = if (t.isDefault) tweaks - key else tweaks + (key to t))
 
-    /** "key=dx,dy,scale,alpha,hidden;…" for the preferences. */
+    fun button(key: String) = buttons.firstOrNull { it.key == key }
+
+    fun withButton(b: CustomButton) = copy(buttons = buttons.map { if (it.id == b.id) b else it })
+
+    fun plusButton(b: CustomButton) = copy(buttons = buttons + b)
+
+    fun minusButton(key: String) = copy(buttons = buttons.filter { it.key != key }, tweaks = tweaks - key)
+
+    /** Number of changes from the built-in layout. */
+    val changes get() = tweaks.size + buttons.size
+
+    /**
+     * "key=dx,dy,scale,alpha,hidden;…" for the preferences, then, on a second line, the custom
+     * buttons as JSON (older layouts have no second line).
+     */
     fun encode(): String = tweaks.entries.joinToString(";") { (k, t) ->
         "$k=${t.dx},${t.dy},${t.scale},${t.alpha},${if (t.hidden) 1 else 0}"
-    }
+    } + if (buttons.isEmpty()) "" else "\n" + CustomButton.listToJson(buttons)
 
     companion object {
-        fun decode(s: String?): PadLayout = PadLayout(
+        fun decode(s: String?): PadLayout {
+            val lines = (s ?: "").split('\n', limit = 2)
+            return decodeTweaks(lines[0]).copy(buttons = lines.getOrNull(1)?.let { CustomButton.listFromJson(it) } ?: emptyList())
+        }
+
+        private fun decodeTweaks(s: String?): PadLayout = PadLayout(
             (s ?: "").split(';').mapNotNull { entry ->
                 val (k, v) = entry.split('=').takeIf { it.size == 2 } ?: return@mapNotNull null
                 val f = v.split(',')
@@ -71,6 +94,8 @@ object PadPart {
 
     /** MENU can't be hidden: it is the way back to everything else. */
     fun canHide(key: String) = key != MENU
+
+    fun isCustom(key: String) = key.startsWith("c:")
 
     fun name(key: String): Int = when (key) {
         LT -> R.string.part_lt

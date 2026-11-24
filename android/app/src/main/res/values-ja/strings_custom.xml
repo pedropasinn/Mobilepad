@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_add">ボタンを追加</string>
+    <string name="custom_new_label">ボタン</string>
+    <string name="custom_presses">%1$s を押す</string>
+    <string name="custom_latch">ロック</string>
+    <string name="custom_delete">ボタンを削除</string>
+    <string name="preset_mkw">マリオカート Wii</string>
+    <string name="preset_mkw_caption">スティック、ロック式アクセル、レース用ボタン</string>
+    <string name="custom_icon">アイコン</string>
+</resources>

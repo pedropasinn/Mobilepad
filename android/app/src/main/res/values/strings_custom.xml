@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="custom_add">Add a button</string>
+    <string name="custom_new_label">BUTTON</string>
+    <string name="custom_presses">Presses %1$s</string>
+    <string name="custom_latch">Lock</string>
+    <string name="custom_delete">Remove button</string>
+    <string name="preset_mkw">Mario Kart Wii</string>
+    <string name="preset_mkw_caption">Stick, locking gas and race buttons</string>
+    <string name="custom_icon">Icon</string>
+</resources>

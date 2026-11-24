@@ -189,6 +189,7 @@ fun ControllerScreen(
                 } else {
                     LandscapeLayout(input, labels, maxHeight, menuBlock, ::button)
                 }
+                CustomButtonsLayer(layoutScope.layout.buttons, input, maxWidth, maxHeight)
             }
 
             if (editingLayout) {
@@ -329,6 +330,7 @@ fun ControllerPreview(
                         .background(Brush.verticalGradient(listOf(style.colors.shellTop, style.colors.shellBottom))),
                 ) {
                     LandscapeLayout(input, ActiveButtonNames.value.labels(), screen.height, { MenuBlock("Mobilepad", StatusKind.CONNECTED, Link.WIFI, false, {}, {}) }) { { } }
+                    CustomButtonsLayer(layout.buttons, input, screen.width, screen.height)
                 }
             }
         }

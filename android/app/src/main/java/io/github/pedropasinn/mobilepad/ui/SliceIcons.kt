@@ -1,6 +1,15 @@
 package io.github.pedropasinn.mobilepad.ui
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FlipCameraAndroid
+import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.HelpCenter
+import androidx.compose.material.icons.rounded.Moving
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.rounded.Speed
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Backpack
@@ -94,6 +103,16 @@ object SliceIcons {
         "jump" to Icons.Rounded.Height,
         "hand" to Icons.Rounded.PanTool,
         "car" to Icons.Rounded.DirectionsCar,
+        // Racing.
+        "gas" to Icons.Rounded.Speed,
+        "brake" to Icons.Rounded.KeyboardDoubleArrowDown,
+        "drift" to Icons.Rounded.Moving,
+        "item" to Icons.Rounded.HelpCenter,
+        "up" to Icons.Rounded.ArrowUpward,
+        "down" to Icons.Rounded.ArrowDownward,
+        "left" to Icons.Rounded.ArrowBack,
+        "right" to Icons.Rounded.ArrowForward,
+        "rear" to Icons.Rounded.FlipCameraAndroid,
         "mount" to Icons.Rounded.Pets,
         "build" to Icons.Rounded.Build,
         "tool" to Icons.Rounded.Handyman,
