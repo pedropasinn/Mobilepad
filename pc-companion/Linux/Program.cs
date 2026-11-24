@@ -23,7 +23,7 @@ internal static class Program
         }
 
         using var server = new CompanionServer(new LinuxPlatform());
-        using var adb = new AdbBridge(server.Port);
+        using var adb = new AdbBridge(server.Port, () => server.Sessions.Any(s => s.IsUsb));
 
         var addresses = CompanionServer.LocalAddresses();
         var url = $"mobilepad://connect?c={string.Join("_", addresses)}_{server.Port}";

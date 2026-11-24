@@ -19,13 +19,15 @@ public sealed class CompanionServer : IDisposable
     public event Action? SessionsChanged;
     public IReadOnlyCollection<PhoneSession> Sessions => _sessions.Keys.ToList();
 
-    public CompanionServer(IPlatform platform)
+    /// <param name="preferredPort">0 binds a free port (the latency bench, so it never takes the real companion's).</param>
+    /// <param name="discovery">Answer LAN discovery broadcasts.</param>
+    public CompanionServer(IPlatform platform, int preferredPort = PreferredPort, bool discovery = true)
     {
         _platform = platform;
-        _listener = Bind(PreferredPort) ?? Bind(0)!;
+        _listener = Bind(preferredPort) ?? Bind(0)!;
         Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
         _ = AcceptLoopAsync();
-        _ = DiscoveryLoopAsync();
+        if (discovery) _ = DiscoveryLoopAsync();
     }
 
     public const int DiscoveryPort = 47801;

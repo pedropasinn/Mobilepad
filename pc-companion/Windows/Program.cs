@@ -28,7 +28,7 @@ internal static class Program
 
         using (vigem)
         using (var server = new CompanionServer(new WindowsPlatform(vigem)))
-        using (var adb = new AdbBridge(server.Port))
+        using (var adb = new AdbBridge(server.Port, () => server.Sessions.Any(s => s.IsUsb)))
         {
             Application.Run(new MainForm(server, adb));
         }

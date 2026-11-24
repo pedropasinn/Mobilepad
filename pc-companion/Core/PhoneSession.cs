@@ -35,12 +35,27 @@ public sealed class PhoneSession : IDisposable
     {
         _tcp = tcp;
         _tcp.NoDelay = true;
+        AckEverySegment(tcp.Client);
         _stream = tcp.GetStream();
         _platform = platform;
         _keyboard = platform.CreateKeyboard();
         var remote = (IPEndPoint)tcp.Client.RemoteEndPoint!;
         // The listener is dual-stack: IPv4 peers show up as ::ffff:a.b.c.d.
         Remote = remote.Address.IsIPv4MappedToIPv6 ? new IPEndPoint(remote.Address.MapToIPv4(), remote.Port) : remote;
+    }
+
+    /// <summary>
+    /// Windows delays ACKs (up to 200 ms) by default. If the sender keeps Nagle on (the phone does
+    /// not, but over USB the sender is the ADB server forwarding for it), each small state waits
+    /// for the ACK of the previous one; acknowledging every segment removes that stall. Best
+    /// effort: older Windows and other systems simply keep their default.
+    /// </summary>
+    private static void AckEverySegment(Socket socket)
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        const int SioTcpSetAckFrequency = unchecked((int)0x98000017); // _WSAIOW(IOC_VENDOR, 23)
+        try { socket.IOControl(SioTcpSetAckFrequency, BitConverter.GetBytes(1), null); }
+        catch (Exception e) when (e is SocketException or PlatformNotSupportedException) { }
     }
 
     public string Describe() =>
@@ -86,12 +101,7 @@ public sealed class PhoneSession : IDisposable
             if (Interlocked.Exchange(ref _pendingFeedback, null) is { } pending) await SendAsync(pending);
             Changed?.Invoke(this);
 
-            while (!_cts.IsCancellationRequested)
-            {
-                var message = await ReadMessageAsync(_cts.Token);
-                if (message is null) break;
-                Handle(message.Value);
-            }
+            await ReceiveTcpOnOwnThread();
         }
         catch (Exception e) when (e is IOException or SocketException or OperationCanceledException or ObjectDisposedException)
         {
@@ -106,6 +116,51 @@ public sealed class PhoneSession : IDisposable
             Dispose();
             Closed?.Invoke(this);
         }
+    }
+
+    /// <summary>
+    /// The control channel after the handshake (over USB it also carries every state). It runs on
+    /// its own high-priority thread with blocking reads instead of thread-pool continuations: with
+    /// the game keeping every core busy, a pool thread can wait a scheduler quantum or more
+    /// before the state reaches the pad. Ends when the phone or <see cref="Dispose"/> closes the socket.
+    /// </summary>
+    private Task ReceiveTcpOnOwnThread()
+    {
+        var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var header = new byte[2];
+                while (!_cts.IsCancellationRequested)
+                {
+                    _stream.ReadExactly(header);
+                    int length = BinaryPrimitives.ReadUInt16LittleEndian(header);
+                    if (length < Protocol.RxHeaderSize) throw new IOException(L.T($"pacchetto non valido ({length})", $"invalid packet ({length})", $"数据包无效（{length}）", $"封包無效（{length}）", $"無効なパケット（{length}）"));
+                    var packet = new byte[length];
+                    header.CopyTo(packet, 0);
+                    _stream.ReadExactly(packet.AsSpan(2));
+                    if (!Protocol.TryParse(packet, out var message)) break;
+                    Handle(message);
+                }
+                done.TrySetResult();
+            }
+            catch (EndOfStreamException)
+            {
+                done.TrySetResult();
+            }
+            catch (Exception e)
+            {
+                done.TrySetException(e);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "Mobilepad phone input",
+            Priority = ThreadPriority.Highest,
+        };
+        thread.Start();
+        return done.Task;
     }
 
     private async Task ReceiveUdpAsync(UdpClient udp, CancellationToken token)

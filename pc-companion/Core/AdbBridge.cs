@@ -10,15 +10,20 @@ public sealed class AdbBridge : IDisposable
 {
     private readonly int _port;
     private readonly HashSet<string> _reversed = [];
+    /// <summary>Phones whose rule was seen or set since they last appeared in "adb devices".</summary>
+    private readonly HashSet<string> _verified = [];
+    private readonly Func<bool> _usbInUse;
     private readonly CancellationTokenSource _cts = new();
 
     public string? AdbPath { get; } = FindAdb();
     public string Status { get; private set; } = "";
     public event Action? StatusChanged;
 
-    public AdbBridge(int port)
+    /// <param name="usbInUse">True while a phone is connected over USB: its rule is known to work.</param>
+    public AdbBridge(int port, Func<bool>? usbInUse = null)
     {
         _port = port;
+        _usbInUse = usbInUse ?? (() => false);
         if (AdbPath is null)
         {
             Status = L.T("ADB non trovato: USB non disponibile (installa Android platform-tools)",
@@ -48,11 +53,18 @@ public sealed class AdbBridge : IDisposable
             .ToList();
         var ready = devices.Where(p => p[1] == "device").Select(p => p[0]).ToList();
         _reversed.IntersectWith(ready);
+        _verified.IntersectWith(ready);
+        // While a phone plays over the cable, leave the USB link alone: "reverse --list" is a
+        // round trip to the phone every 2 s, in the middle of its input stream. A cable or ADB
+        // restart drops that session (or the phone from the list), and the checks resume.
+        bool inUse = _usbInUse();
 
         foreach (var serial in ready)
         {
+            if (inUse && _verified.Contains(serial)) continue;
             // The rule disappears when ADB or the cable reconnects: check it every time.
             var rules = await RunAsync($"-s {serial} reverse --list");
+            _verified.Add(serial);
             if (rules.Contains($"tcp:{_port} tcp:{_port}")) continue;
             await RunAsync($"-s {serial} reverse tcp:{_port} tcp:{_port}");
             if (_reversed.Add(serial)) Log.Write(L.T($"USB pronto su {serial}", $"USB ready on {serial}", $"USB 已就绪：{serial}", $"USB 已就緒：{serial}", $"USB 準備完了：{serial}"));
