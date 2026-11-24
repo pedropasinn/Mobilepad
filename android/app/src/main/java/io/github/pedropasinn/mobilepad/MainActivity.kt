@@ -46,6 +46,7 @@ import io.github.pedropasinn.mobilepad.bt.BluetoothKeepAliveService
 import io.github.pedropasinn.mobilepad.bt.GenericGamepadProfile
 import io.github.pedropasinn.mobilepad.bt.SwitchProProfile
 import io.github.pedropasinn.mobilepad.input.GamepadInput
+import io.github.pedropasinn.mobilepad.input.LatencyTest
 import io.github.pedropasinn.mobilepad.macro.MacroConfig
 import io.github.pedropasinn.mobilepad.macro.MacroEngine
 import io.github.pedropasinn.mobilepad.input.PhysicalGamepad
@@ -308,6 +309,7 @@ class MainActivity : ComponentActivity() {
         )
         if (prefs.bluetoothEnabled && hasBluetoothPermission()) enableBluetooth()
         if (BuildConfig.DEBUG) applyTestExtras()
+        startLatencyTest(intent)
 
         setContent {
             io.github.pedropasinn.mobilepad.ui.MobilepadTheme(theme) {
@@ -830,6 +832,23 @@ class MainActivity : ComponentActivity() {
      * Debug builds only, for testing over ADB:
      *   --es target IP:PORT | --ez usb true | --es macrosFile /data/local/tmp/macros.json
      */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        startLatencyTest(intent)
+    }
+
+    /** Latency test asked by the PC tool (tools/latency): `--ez latency true [--ei latencyCount N]`. */
+    private fun startLatencyTest(intent: Intent?) {
+        if (intent?.getBooleanExtra("latency", false) != true) return
+        input.resetTouch()
+        LatencyTest.start(
+            this, input, lifecycleScope, intent.getIntExtra("latencyCount", 200),
+            avoid = macroConfig.macros.filter { Integer.bitCount(it.trigger.buttons) > 1 }.fold(0) { m, x -> m or x.trigger.buttons },
+        ) {
+            runOnUiThread { toast("Latency test done") }
+        }
+    }
+
     private fun applyTestExtras() {
         intent.getStringExtra("target")?.let(::connectTo)
         if (intent.getBooleanExtra("usb", false)) connection.connect(ConnectTarget.usb())

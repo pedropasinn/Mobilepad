@@ -76,6 +76,12 @@ class MacroEngine(
     private val pressedAt = LongArray(16)
     private var previousButtons = 0
 
+    /**
+     * Combo starters let go while still held back (no combo formed): sent as a short tap so a
+     * quick press is never lost, cleared after [TAP_MS].
+     */
+    private var tapping = 0
+
     private val _output = MutableStateFlow(ControllerState.NEUTRAL)
     val output: StateFlow<ControllerState> = _output
 
@@ -172,7 +178,28 @@ class MacroEngine(
 
     fun onInput(state: ControllerState) {
         val rising = state.buttons and previousButtons.inv()
+        val falling = previousButtons and state.buttons.inv()
         previousButtons = state.buttons
+        // A combo starter released inside its window never reached the game: send it now as a tap,
+        // unless it was part of a combo that formed (then it belongs to the combo).
+        if (falling and guarded != 0 && config.comboWindowMs > 0) {
+            val now = clock()
+            var tap = 0
+            for (bit in 0 until 16) {
+                val mask = 1 shl bit
+                if (falling and guarded and mask != 0 && now - pressedAt[bit] < config.comboWindowMs &&
+                    held.keys.none { it.trigger.buttons and mask != 0 }
+                ) tap = tap or mask
+            }
+            if (tap != 0) {
+                tapping = tapping or tap
+                scope.launch {
+                    delay(TAP_MS)
+                    tapping = tapping and tap.inv()
+                    publish()
+                }
+            }
+        }
         if (rising and guarded != 0 && config.comboWindowMs > 0) {
             val now = clock()
             for (bit in 0 until 16) if (rising and (1 shl bit) != 0) pressedAt[bit] = now
@@ -439,7 +466,7 @@ class MacroEngine(
                 rightTrigger = if (t.rightTrigger) 0 else out.rightTrigger,
             )
         }
-        out = out.copy(buttons = out.buttons and swallowed.inv())
+        out = out.copy(buttons = (out.buttons or tapping) and swallowed.inv())
         // The sticks that drive an open radial menu do not reach the game.
         session?.levels?.forEach { out = withStick(out, it.menu.stick, 0f, 0f) }
 
@@ -482,6 +509,8 @@ class MacroEngine(
     }
 
     companion object {
+        /** How long a held-back combo starter released early is sent for. */
+        private const val TAP_MS = 40L
         private const val TRIGGER_THRESHOLD = 128
         private const val RADIAL_DEADZONE = 0.5f
         private const val MIN_REPEAT_MS = 30L

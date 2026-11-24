@@ -49,6 +49,17 @@ class MacroEngineTest {
     }
 
     @Test
+    fun `a combo starter tapped shorter than the window still reaches the game`() = runTest {
+        val engine = engine()
+        engine.onInput(pressed(Buttons.LEFT_THUMB)); runCurrent()
+        advanceTimeBy(20)
+        engine.onInput(pressed()); runCurrent()
+        assertTrue(engine.has(Buttons.LEFT_THUMB))
+        advanceTimeBy(100); runCurrent()
+        assertTrue(!engine.has(Buttons.LEFT_THUMB))
+    }
+
+    @Test
     fun `buttons outside combos are never delayed`() = runTest {
         val engine = engine()
         engine.onInput(pressed(Buttons.B)); runCurrent()
