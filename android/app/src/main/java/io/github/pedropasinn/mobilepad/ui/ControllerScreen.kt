@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
@@ -213,9 +214,7 @@ private fun MenuBlock(status: String, statusKind: StatusKind, recenter: Boolean,
     Column(Modifier.tweak(PadPart.MENU), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                PadButton("", { if (it) onMenu() }, Modifier.width(54.dp).height(24.dp), PillShape, part = Part.MENU)
-                // Skin artwork of the button already carries its printing.
-                if (Part.MENU !in LocalSkinParts.current) ShellLabel(str(R.string.pad_menu))
+                PadButton(str(R.string.pad_menu), { if (it) onMenu() }, Modifier.width(64.dp).height(26.dp), PillShape, fontSize = 11, part = Part.MENU)
             }
             if (recenter) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -328,18 +327,39 @@ fun ControllerPreview(
     }
 }
 
-/** Button names for the two layouts; positions stay the same, only the printing changes. */
+/** A system button as the console prints it: name (read aloud), mark inside, size and shape. */
+private class SysKey(val name: String, val icon: ImageVector?, val w: Int, val h: Int, val round: Boolean, val font: Int)
+
+/** A face button's mark: text, or a symbol drawn in its own colour (PlayStation). */
+private class FaceMark(val text: String, val icon: ImageVector? = null, val color: Color = Color.Unspecified)
+
+/** Printing for each console; positions stay the same, only what is printed changes. */
 private class PadLabels(
     val lt: String, val lb: String, val rb: String, val rt: String,
-    val back: String, val guide: String, val start: String,
-    val a: String, val b: String, val x: String, val y: String,
+    val back: SysKey, val guide: SysKey, val start: SysKey,
+    val a: FaceMark, val b: FaceMark, val x: FaceMark, val y: FaceMark,
 )
 
-private val XBOX = PadLabels("LT", "LB", "RB", "RT", "BACK", "GUIDE", "START", "A", "B", "X", "Y")
+private val XBOX = PadLabels(
+    "LT", "LB", "RB", "RT",
+    SysKey("View", XboxView, 32, 32, true, 14), SysKey("Guide", XboxGuide, 40, 40, true, 20), SysKey("Menu", ThreeLines, 32, 32, true, 14),
+    // Letters in their colours, as on the controller.
+    FaceMark("A", color = Color(0xFF6CD43A)), FaceMark("B", color = Color(0xFFFF5A5F)),
+    FaceMark("X", color = Color(0xFF4F9BFF)), FaceMark("Y", color = Color(0xFFFFCB3D)),
+)
 // Nintendo printing: the east button is A, the south one B.
-private val NINTENDO = PadLabels("ZL", "L", "R", "ZR", "−", "HOME", "+", "B", "A", "Y", "X")
-// PlayStation printing: cross south, circle east, square west, triangle north.
-private val PLAYSTATION = PadLabels("L2", "L1", "R1", "R2", "SHARE", "PS", "OPTIONS", "✕", "○", "□", "△")
+private val NINTENDO = PadLabels(
+    "ZL", "L", "R", "ZR",
+    SysKey("−", NinMinus, 30, 30, true, 14), SysKey("HOME", NinHome, 36, 36, true, 16), SysKey("+", NinPlus, 30, 30, true, 14),
+    FaceMark("B"), FaceMark("A"), FaceMark("Y"), FaceMark("X"),
+)
+// PlayStation printing: cross south, circle east, square west, triangle north, each in its colour.
+private val PLAYSTATION = PadLabels(
+    "L2", "L1", "R1", "R2",
+    SysKey("Share", PsShare, 40, 24, false, 12), SysKey("PS", null, 36, 36, true, 12), SysKey("Options", ThreeLines, 40, 24, false, 12),
+    FaceMark("✕", PsCross, Color(0xFF7CA8FF)), FaceMark("○", PsCircle, Color(0xFFFF6A6A)),
+    FaceMark("□", PsSquare, Color(0xFFF39BD0)), FaceMark("△", PsTriangle, Color(0xFF3FD0A8)),
+)
 
 /** Which console's names are printed on the controller; [AUTO] follows the connection. */
 enum class ButtonNames { AUTO, XBOX, PLAYSTATION, NINTENDO }
@@ -358,23 +378,30 @@ val ActiveButtonNames = androidx.compose.runtime.mutableStateOf(ButtonNames.XBOX
 
 @Composable
 private fun FaceButtons(labels: PadLabels, face: Dp, button: (Int) -> (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    // A skin with its own coloured buttons keeps its ink; otherwise symbols use their colour.
+    val ownColours = LocalSkin.current.faceColors != null
+    @Composable
+    fun Face(m: FaceMark, mask: Int, place: Modifier) = PadButton(
+        m.text, button(mask), place.size(face), fontSize = 20, part = mask,
+        icon = m.icon, color = if (ownColours) Color.Unspecified else m.color,
+    )
     Box(modifier.tweak(PadPart.FACE).size(face * 3)) {
-        PadButton(labels.y, button(Buttons.Y), Modifier.align(Alignment.TopCenter).size(face), fontSize = 20, part = Buttons.Y)
-        PadButton(labels.x, button(Buttons.X), Modifier.align(Alignment.CenterStart).size(face), fontSize = 20, part = Buttons.X)
-        PadButton(labels.b, button(Buttons.B), Modifier.align(Alignment.CenterEnd).size(face), fontSize = 20, part = Buttons.B)
-        PadButton(labels.a, button(Buttons.A), Modifier.align(Alignment.BottomCenter).size(face), fontSize = 20, part = Buttons.A)
+        Face(labels.y, Buttons.Y, Modifier.align(Alignment.TopCenter))
+        Face(labels.x, Buttons.X, Modifier.align(Alignment.CenterStart))
+        Face(labels.b, Buttons.B, Modifier.align(Alignment.CenterEnd))
+        Face(labels.a, Buttons.A, Modifier.align(Alignment.BottomCenter))
     }
 }
 
-/** Back / Guide / Start as small pills with the name printed underneath. */
+/** Back / Guide / Start shaped and marked like the chosen console's, the mark inside the button. */
 @Composable
 private fun SystemButtons(labels: PadLabels, button: (Int) -> (Boolean) -> Unit) {
-    Row(Modifier.tweak(PadPart.SYSTEM), horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.Top) {
-        for ((label, mask) in listOf(labels.back to Buttons.BACK, labels.guide to Buttons.GUIDE, labels.start to Buttons.START)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                PadButton("", button(mask), Modifier.width(50.dp).height(22.dp), PillShape, part = mask)
-                ShellLabel(label)
-            }
+    Row(Modifier.tweak(PadPart.SYSTEM), horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
+        for ((key, mask) in listOf(labels.back to Buttons.BACK, labels.guide to Buttons.GUIDE, labels.start to Buttons.START)) {
+            PadButton(
+                key.name, button(mask), Modifier.size(key.w.dp, key.h.dp), if (key.round) CircleShape else PillShape,
+                fontSize = key.font, icon = key.icon, part = mask,
+            )
         }
     }
 }
