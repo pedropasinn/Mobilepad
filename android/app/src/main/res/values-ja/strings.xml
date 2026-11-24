@@ -282,7 +282,7 @@
     <string name="usb_caption">ケーブル · 最低遅延</string>
     <string name="bt_caption">ソフト不要</string>
     <string name="manual_address">アドレスを手入力</string>
-    <string name="skin">コントローラーのスキン</string>
+    <string name="skin">スキン</string>
     <string name="skin_sub">画面上のコントローラーの見た目</string>
     <string name="skin_violet">バイオレット</string>
     <string name="skin_rose">ローズ</string>
@@ -302,7 +302,7 @@
     <string name="skin_use">このスキンを使う</string>
     <string name="not_now">あとで</string>
     <string name="skin_preview_note">Mobilepad はスキンの配色とボタンの絵柄を使います。レイアウトは Mobilepad のままで、ゲーム画面はありません。スキンにないボタンはその配色で描かれます。</string>
-    <string name="controller_orientation">コントローラーの向き</string>
+    <string name="controller_orientation">向き</string>
     <string name="controller_orientation_note">コントローラーのみ：メニューはスマホの持ち方に合わせて回転します。</string>
     <string name="macros_summary">マクロ %1$d · ホイール %2$d</string>
     <string name="state_on_text">オン</string>

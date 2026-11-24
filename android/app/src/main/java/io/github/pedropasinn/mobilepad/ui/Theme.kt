@@ -12,6 +12,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -129,10 +130,12 @@ fun MobilepadTheme(theme: AppTheme, content: @Composable () -> Unit) {
                 onSurface = p.text,
                 onSurfaceVariant = p.muted,
                 surfaceContainerLowest = p.background,
-                surfaceContainerLow = p.surface,
-                surfaceContainer = p.surface,
-                surfaceContainerHigh = p.surfaceHigh,
-                surfaceContainerHighest = p.surfaceHigh,
+                // Opaque: dialogs and menus draw on these, and the translucent glass colours
+                // let the screen show through them.
+                surfaceContainerLow = p.surface.compositeOver(p.background),
+                surfaceContainer = p.surface.compositeOver(p.background),
+                surfaceContainerHigh = p.surfaceHigh.compositeOver(p.background),
+                surfaceContainerHighest = p.surfaceHigh.compositeOver(p.background),
                 outline = p.outline,
                 outlineVariant = p.outline,
                 error = Danger,

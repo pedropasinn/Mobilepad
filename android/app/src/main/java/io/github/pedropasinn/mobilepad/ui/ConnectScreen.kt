@@ -528,6 +528,7 @@ private fun ControllerPage(wide: Boolean, c: ControllerPanel) {
         selected = selected,
         onSelect = { selected = it },
         wide = wide,
+        listWidth = 236.dp,
     )
 }
 

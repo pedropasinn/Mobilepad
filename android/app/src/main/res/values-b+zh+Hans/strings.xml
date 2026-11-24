@@ -282,7 +282,7 @@
     <string name="usb_caption">数据线 · 延迟最低</string>
     <string name="bt_caption">无需安装软件</string>
     <string name="manual_address">手动输入地址</string>
-    <string name="skin">控制器外观</string>
+    <string name="skin">外观</string>
     <string name="skin_sub">屏幕控制器的外观</string>
     <string name="skin_violet">紫色</string>
     <string name="skin_rose">粉色</string>
@@ -302,7 +302,7 @@
     <string name="skin_use">使用此外观</string>
     <string name="not_now">以后再说</string>
     <string name="skin_preview_note">Mobilepad 采用外观的配色和按键图案；布局仍是 Mobilepad 的，没有游戏画面。外观没有的按键会用它的配色绘制。</string>
-    <string name="controller_orientation">控制器方向</string>
+    <string name="controller_orientation">方向</string>
     <string name="controller_orientation_note">仅用于控制器：菜单会随手机的握持方向旋转。</string>
     <string name="macros_summary">%1$d 个宏 · %2$d 个轮盘</string>
     <string name="state_on_text">开</string>

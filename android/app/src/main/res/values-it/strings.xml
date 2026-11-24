@@ -282,7 +282,7 @@
     <string name="usb_caption">Cavo · latenza minima</string>
     <string name="bt_caption">Nessun software</string>
     <string name="manual_address">Indirizzo manuale</string>
-    <string name="skin">Skin del controller</string>
+    <string name="skin">Skin</string>
     <string name="skin_sub">Aspetto del controller sullo schermo</string>
     <string name="skin_violet">Viola</string>
     <string name="skin_rose">Rosa</string>
@@ -302,7 +302,7 @@
     <string name="skin_use">Usa questa skin</string>
     <string name="not_now">Non ora</string>
     <string name="skin_preview_note">Mobilepad prende i colori e la grafica dei tasti della skin; il layout resta quello di Mobilepad, senza lo schermo di gioco. I tasti che la skin non ha sono disegnati nei suoi colori.</string>
-    <string name="controller_orientation">Orientamento del controller</string>
+    <string name="controller_orientation">Orientamento</string>
     <string name="controller_orientation_note">Solo per il controller: i menu seguono come tieni il telefono.</string>
     <string name="macros_summary">%1$d macro · %2$d ruote</string>
     <string name="state_on_text">Attivo</string>
