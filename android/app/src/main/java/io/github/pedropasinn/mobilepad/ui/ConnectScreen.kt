@@ -375,7 +375,7 @@ private fun ConnectPage(
     var selected by rememberSaveable { mutableStateOf<String?>(if (bluetooth.active) "bt" else "wifi") }
     MasterDetail(
         items = listOf(
-            PaneItem("wifi", Icons.Rounded.Wifi, Hue.TEAL, "Wi‑Fi", str(R.string.wifi_caption), badges = listOf(Icons.Rounded.Computer, Icons.Rounded.VideogameAsset)) {
+            PaneItem("wifi", Icons.Rounded.Wifi, Hue.TEAL, "Wi‑Fi", str(R.string.wifi_caption), badges = listOf(Icons.Rounded.Computer, SwitchConsoleIcon)) {
                 WifiDetail(initialTarget, onScan, found, searching, onSearch, onFound, onConnect)
             },
             PaneItem("usb", Icons.Rounded.Usb, Hue.ORANGE, "USB", str(R.string.usb_caption), badges = listOf(Icons.Rounded.Computer, Icons.Rounded.Bolt)) {
@@ -386,7 +386,7 @@ private fun ConnectPage(
             PaneItem(
                 "bt", Icons.Rounded.Bluetooth, Hue.BLUE, "Bluetooth", bluetooth.status.ifEmpty { str(R.string.bt_caption) },
                 // While active, the state says more than the icons.
-                badges = if (bluetooth.status.isEmpty()) listOf(Icons.Rounded.Computer, Icons.Rounded.Android, Icons.Rounded.VideogameAsset) else emptyList(),
+                badges = if (bluetooth.status.isEmpty()) listOf(Icons.Rounded.Computer, Icons.Rounded.Android, SwitchConsoleIcon) else emptyList(),
             ) {
                 BluetoothDetail(bluetooth)
             },
