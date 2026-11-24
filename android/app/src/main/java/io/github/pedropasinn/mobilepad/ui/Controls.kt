@@ -38,6 +38,8 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.Shape
@@ -65,15 +67,19 @@ import kotlin.math.min
 
 /** Body of a moulded button, shared by buttons, triggers and the stick knob. */
 @Composable
-private fun Modifier.moulded(shape: Shape, pressed: Boolean, selected: Boolean = false): Modifier {
+private fun Modifier.moulded(shape: Shape, pressed: Boolean, selected: Boolean = false, tint: Color? = null): Modifier {
     val s = LocalSkin.current
+    // A coloured face button is moulded from its own colour: lit top, deeper bottom, darker press.
+    val top = tint?.let { lerp(it, Color.White, 0.14f) } ?: s.buttonTop
+    val bottom = tint?.let { lerp(it, Color.Black, 0.2f) } ?: s.buttonBottom
+    val down = tint?.let { lerp(it, Color.Black, 0.32f) } ?: s.buttonPressed
     return this
         .graphicsLayer { val k = if (pressed) 0.96f else 1f; scaleX = k; scaleY = k }
         .shadow(if (pressed) 1.dp else 5.dp, shape, ambientColor = s.shadow, spotColor = s.shadow)
         .clip(shape)
         .background(
-            if (pressed) Brush.verticalGradient(listOf(s.buttonPressed, s.buttonPressed))
-            else Brush.verticalGradient(listOf(s.buttonTop, s.buttonBottom)),
+            if (pressed) Brush.verticalGradient(listOf(down, down))
+            else Brush.verticalGradient(listOf(top, bottom)),
         )
         .border(
             if (selected) 2.dp else 1.dp,
@@ -101,11 +107,12 @@ fun PadButton(
     val view = LocalView.current
     val s = LocalSkin.current
     val art = part?.let { LocalSkinParts.current[it] }
+    val tint = part?.let { s.faceColors?.get(it) }
     val callback by rememberUpdatedState(onChange)
     var pressed by remember { mutableStateOf(false) }
     Box(
         (if (art != null) modifier.graphicsLayer { val k = if (pressed) 0.94f else 1f; scaleX = k; scaleY = k }
-        else modifier.moulded(shape, pressed, selected))
+        else modifier.moulded(shape, pressed, selected, tint))
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
@@ -128,6 +135,8 @@ fun PadButton(
         val ink = when {
             color != Color.Unspecified -> color
             selected -> s.glow
+            // Whichever of white or a near-black reads better on the coloured body.
+            tint != null -> if (tint.luminance() < 0.179f) Color.White else Color(0xFF2A2620)
             else -> s.buttonInk
         }
         if (icon != null) {

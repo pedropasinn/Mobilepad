@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Names of the built-in controller skins (SkinId.nameRes). Add each key to every strings_skins.xml. -->
+<resources>
+    <string name="skin_cream">Cream</string>
+    <string name="skin_frost">Frost</string>
+    <string name="skin_ocean">Ocean</string>
+    <string name="skin_sunset">Sunset</string>
+    <string name="skin_forest">Forest</string>
+    <string name="skin_smoke">Smoke</string>
+    <string name="skin_gold">Gold</string>
+    <string name="skin_mint">Mint</string>
+    <string name="skin_neon">Neon</string>
+    <string name="skin_lavender">Lavender</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skin_cream">奶油</string>
+    <string name="skin_frost">冰霜</string>
+    <string name="skin_ocean">海洋</string>
+    <string name="skin_sunset">日落</string>
+    <string name="skin_forest">森林</string>
+    <string name="skin_smoke">烟灰</string>
+    <string name="skin_gold">金色</string>
+    <string name="skin_mint">薄荷</string>
+    <string name="skin_neon">霓虹</string>
+    <string name="skin_lavender">薰衣草</string>
+</resources>

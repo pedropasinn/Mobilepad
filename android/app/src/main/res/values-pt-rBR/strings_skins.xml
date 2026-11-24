@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skin_cream">Creme</string>
+    <string name="skin_frost">Gelo</string>
+    <string name="skin_ocean">Oceano</string>
+    <string name="skin_sunset">Pôr do sol</string>
+    <string name="skin_forest">Floresta</string>
+    <string name="skin_smoke">Fumê</string>
+    <string name="skin_gold">Ouro</string>
+    <string name="skin_mint">Menta</string>
+    <string name="skin_neon">Neon</string>
+    <string name="skin_lavender">Lavanda</string>
+</resources>

@@ -562,7 +562,7 @@ private fun SkinGallery(c: ControllerPanel, large: Boolean) {
     }
 
     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(listOf(SkinId.VIOLET, SkinId.ROSE, SkinId.GRAPHITE)) { id ->
+        items(SkinId.entries) { id ->
             val name = builtInName(id)
             SkinCard(builtInStyle(id, name), name, str(R.string.skin_builtin), c.selected == null && c.builtIn == id, onClick = {
                 c.onBuiltIn(id); c.onSelect(null)
@@ -579,11 +579,7 @@ private fun SkinGallery(c: ControllerPanel, large: Boolean) {
 }
 
 @Composable
-private fun builtInName(id: SkinId) = when (id) {
-    SkinId.VIOLET -> str(R.string.skin_violet)
-    SkinId.ROSE -> str(R.string.skin_rose)
-    SkinId.GRAPHITE -> str(R.string.skin_graphite)
-}
+private fun builtInName(id: SkinId) = str(id.nameRes)
 
 @Composable
 private fun SkinCard(style: SkinStyle?, name: String, caption: String, selected: Boolean, onClick: () -> Unit, onDelete: (() -> Unit)? = null) {

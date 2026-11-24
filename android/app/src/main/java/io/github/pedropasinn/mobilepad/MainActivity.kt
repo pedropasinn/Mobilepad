@@ -323,11 +323,7 @@ class MainActivity : ComponentActivity() {
             }
             val deltaSkins by skinLibrary.skins.collectAsState()
             val activeDelta = deltaSkins.firstOrNull { it.dir.name == deltaSkinId }
-            val builtInName = str(when (skin) {
-                io.github.pedropasinn.mobilepad.ui.SkinId.VIOLET -> R.string.skin_violet
-                io.github.pedropasinn.mobilepad.ui.SkinId.ROSE -> R.string.skin_rose
-                io.github.pedropasinn.mobilepad.ui.SkinId.GRAPHITE -> R.string.skin_graphite
-            })
+            val builtInName = str(skin.nameRes)
             val padStyle = activeDelta?.let { io.github.pedropasinn.mobilepad.ui.rememberDeltaStyle(it) }
                 ?: io.github.pedropasinn.mobilepad.ui.builtInStyle(skin, builtInName)
             val amiiboEntries by amiiboLibrary.entries.collectAsState()
