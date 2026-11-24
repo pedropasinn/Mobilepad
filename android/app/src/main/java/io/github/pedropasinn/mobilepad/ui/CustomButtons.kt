@@ -82,7 +82,7 @@ data class CustomButton(
 }
 
 /** How long a latching button must be held to lock on. */
-const val LATCH_HOLD_MS = 400L
+const val LATCH_HOLD_MS = 250L
 
 /**
  * The layout's custom buttons, placed over the controller area ([w] × [h]). A latching button
