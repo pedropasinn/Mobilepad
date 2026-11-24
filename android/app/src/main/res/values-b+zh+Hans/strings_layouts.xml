@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ready-made controller layouts (ui/LayoutPresets.kt). -->
+<resources>
+    <string name="preset_section">预设布局</string>
+    <string name="preset_default">默认</string>
+    <string name="preset_default_caption">出厂设置</string>
+    <string name="preset_retro">复古</string>
+    <string name="preset_retro_caption">大十字键和按键</string>
+    <string name="preset_racing">赛车</string>
+    <string name="preset_racing_caption">拇指下的大扳机</string>
+    <string name="preset_lefty">左手</string>
+    <string name="preset_lefty_caption">左右互换</string>
+    <string name="preset_compact">紧凑</string>
+    <string name="preset_compact_caption">更小，靠向角落</string>
+    <string name="preset_minimal">极简</string>
+    <string name="preset_minimal_caption">半透明，无多余元素</string>
+    <string name="preset_replace_title">替换你的布局？</string>
+    <string name="preset_replace_text">你在编辑器中所做的更改将被“%1$s”布局替换。</string>
+    <string name="preset_replace">替换</string>
+    <string name="preset_cancel">取消</string>
+</resources>

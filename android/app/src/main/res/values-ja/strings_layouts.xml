@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ready-made controller layouts (ui/LayoutPresets.kt). -->
+<resources>
+    <string name="preset_section">プリセットレイアウト</string>
+    <string name="preset_default">標準</string>
+    <string name="preset_default_caption">初期状態</string>
+    <string name="preset_retro">レトロ</string>
+    <string name="preset_retro_caption">大きな十字キーとボタン</string>
+    <string name="preset_racing">レース</string>
+    <string name="preset_racing_caption">親指の下に大きなトリガー</string>
+    <string name="preset_lefty">左利き</string>
+    <string name="preset_lefty_caption">左右反転</string>
+    <string name="preset_compact">コンパクト</string>
+    <string name="preset_compact_caption">小さく、隅に寄せる</string>
+    <string name="preset_minimal">ミニマル</string>
+    <string name="preset_minimal_caption">半透明、余計なものなし</string>
+    <string name="preset_replace_title">レイアウトを置き換えますか？</string>
+    <string name="preset_replace_text">エディターで行った変更は「%1$s」レイアウトに置き換えられます。</string>
+    <string name="preset_replace">置き換える</string>
+    <string name="preset_cancel">キャンセル</string>
+</resources>

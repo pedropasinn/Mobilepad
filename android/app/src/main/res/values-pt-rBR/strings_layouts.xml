@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ready-made controller layouts (ui/LayoutPresets.kt). -->
+<resources>
+    <string name="preset_section">Layouts prontos</string>
+    <string name="preset_default">Padrão</string>
+    <string name="preset_default_caption">Como vem de fábrica</string>
+    <string name="preset_retro">Retrô</string>
+    <string name="preset_retro_caption">D-pad e botões grandes</string>
+    <string name="preset_racing">Corrida</string>
+    <string name="preset_racing_caption">Gatilhos grandes no polegar</string>
+    <string name="preset_lefty">Canhoto</string>
+    <string name="preset_lefty_caption">Lados trocados</string>
+    <string name="preset_compact">Compacto</string>
+    <string name="preset_compact_caption">Menor, nos cantos</string>
+    <string name="preset_minimal">Minimalista</string>
+    <string name="preset_minimal_caption">Translúcido, sem extras</string>
+    <string name="preset_replace_title">Substituir o seu layout?</string>
+    <string name="preset_replace_text">As mudanças feitas no editor serão trocadas pelo layout “%1$s”.</string>
+    <string name="preset_replace">Substituir</string>
+    <string name="preset_cancel">Cancelar</string>
+</resources>
