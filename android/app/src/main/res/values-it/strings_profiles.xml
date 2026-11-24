@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profiles_title">Profili di gioco</string>
+    <string name="profiles_none">Nessuno in uso</string>
+    <string name="profiles_new">Nuovo profilo</string>
+    <string name="profiles_name">Nome del profilo</string>
+    <string name="profiles_rename">Rinomina</string>
+    <string name="profiles_delete">Elimina</string>
+    <string name="profiles_detach">Smetti di usare</string>
+    <string name="profiles_save">Salva</string>
+    <string name="profiles_cancel">Annulla</string>
+    <string name="profiles_default_name">Il mio gioco</string>
+    <string name="profiles_delete_confirm">Eliminare il profilo “%1$s”?</string>
+    <string name="profiles_note">Un profilo conserva skin, disposizione, nomi dei tasti, rimappatura, macro e movimento. Toccane uno per usarlo; mentre è in uso, ciò che cambi viene salvato lì.</string>
+    <string name="bt_name">Nome Bluetooth</string>
+    <string name="bt_name_hint">Nome del telefono</string>
+    <string name="bt_name_switch">In modalità Switch il nome è sempre “Pro Controller”: la console accetta solo quello.</string>
+    <string name="bt_name_note">Il nome mostrato da PC, TV o altro telefono durante l\'abbinamento. Vuoto: il nome del telefono.</string>
+</resources>

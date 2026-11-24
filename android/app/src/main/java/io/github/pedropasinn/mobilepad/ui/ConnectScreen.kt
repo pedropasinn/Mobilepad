@@ -157,6 +157,13 @@ class ControllerPanel(
     val onResetLayout: () -> Unit = {},
     val buttonNames: ButtonNames = ButtonNames.AUTO,
     val onButtonNames: (ButtonNames) -> Unit = {},
+    val profiles: List<io.github.pedropasinn.mobilepad.GameProfile> = emptyList(),
+    val activeProfile: String = "",
+    val onApplyProfile: (String) -> Unit = {},
+    val onNewProfile: (String) -> Unit = {},
+    val onRenameProfile: (String, String) -> Unit = { _, _ -> },
+    val onDeleteProfile: (String) -> Unit = {},
+    val onDetachProfile: () -> Unit = {},
     /** Portrait layout, to tell which ready-made layout is in use. */
     val portraitLayout: PadLayout = PadLayout(),
     /** Applies a ready-made layout to both orientations. */
@@ -503,16 +510,38 @@ private fun BluetoothDetail(bluetooth: BluetoothPanel) {
             TextButton(onClick = bluetooth.onDisable) { Text(str(R.string.bt_disable), color = Danger) }
         }
     }
+    BluetoothName(bluetooth)
     Note(str(R.string.bt_subtitle))
+}
+
+/** The name hosts see when pairing; fixed to "Pro Controller" for the Switch, which wants it. */
+@Composable
+private fun BluetoothName(bt: BluetoothPanel) {
+    SectionLabel(str(R.string.bt_name))
+    if (bt.profileId == SwitchProProfile.ID) {
+        Note(str(R.string.bt_name_switch))
+        return
+    }
+    var name by remember(bt.btName) { mutableStateOf(bt.btName) }
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            name, { name = it }, singleLine = true, modifier = Modifier.weight(1f),
+            placeholder = { Text(bt.phoneName.ifBlank { str(R.string.bt_name_hint) }) },
+        )
+        Button(onClick = { bt.onBtName(name) }, enabled = name.trim() != bt.btName) { Text(str(R.string.profiles_save)) }
+    }
+    Note(str(R.string.bt_name_note))
 }
 
 // ---------------------------------------------------------------- Controller
 
 @Composable
 private fun ControllerPage(wide: Boolean, c: ControllerPanel) {
-    var selected by rememberSaveable { mutableStateOf<String?>("skin") }
+    var selected by rememberSaveable { mutableStateOf<String?>("profiles") }
     MasterDetail(
         items = listOf(
+            PaneItem("profiles", Icons.Rounded.SportsEsports, Hue.TEAL, str(R.string.profiles_title),
+                c.profiles.firstOrNull { it.id == c.activeProfile }?.name ?: str(R.string.profiles_none)) { ProfilesPane(c) },
             PaneItem("skin", Icons.Rounded.Style, Hue.VIOLET, str(R.string.skin), c.currentName) { SkinGallery(c, large = !wide) },
             PaneItem("layout", Icons.Rounded.OpenWith, Hue.ORANGE, str(R.string.layout_title),
                 (if (c.layoutChanges == 0) str(R.string.remap_none) else str(R.string.layout_count, c.layoutChanges)) +
@@ -520,13 +549,6 @@ private fun ControllerPage(wide: Boolean, c: ControllerPanel) {
                 LayoutPane(c)
             },
             PaneItem("macros", Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros), c.macroSummary, onOpen = c.onMacros),
-            PaneItem("orientation", Icons.Rounded.ScreenRotation, Hue.GREEN, str(R.string.controller_orientation), orientationName(c.orientation)) {
-                OptionList(
-                    ScreenOrientation.entries.map { it to orientationName(it) },
-                    c.orientation, c.onOrientation,
-                )
-                Note(str(R.string.controller_orientation_note))
-            },
         ),
         selected = selected,
         onSelect = { selected = it },
@@ -567,6 +589,10 @@ private fun LayoutPane(c: ControllerPanel) {
         if (c.layoutChanges > 0) TextButton(onClick = c.onResetLayout) { Text(str(R.string.layout_reset_all)) }
     }
     Note(str(R.string.layout_note))
+    // Orientation lives with the layout: it decides which of the two layouts is used.
+    SectionLabel(str(R.string.controller_orientation))
+    OptionList(ScreenOrientation.entries.map { it to orientationName(it) }, c.orientation, c.onOrientation)
+    Note(str(R.string.controller_orientation_note))
     SectionLabel(str(R.string.remap_functions))
     RemapEditor(c.remap, c.onRemap)
 }
@@ -765,4 +791,8 @@ class BluetoothPanel(
     val profileId: String,
     val onProfile: (String) -> Unit,
     val onConnect: (String) -> Unit,
+    /** Name shown to hosts in the generic mode ("" = the phone's own, [phoneName]). */
+    val btName: String = "",
+    val phoneName: String = "",
+    val onBtName: (String) -> Unit = {},
 )

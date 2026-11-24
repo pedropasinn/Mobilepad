@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profiles_title">游戏配置</string>
+    <string name="profiles_none">未使用</string>
+    <string name="profiles_new">新建配置</string>
+    <string name="profiles_name">配置名称</string>
+    <string name="profiles_rename">重命名</string>
+    <string name="profiles_delete">删除</string>
+    <string name="profiles_detach">停止使用</string>
+    <string name="profiles_save">保存</string>
+    <string name="profiles_cancel">取消</string>
+    <string name="profiles_default_name">我的游戏</string>
+    <string name="profiles_delete_confirm">删除配置“%1$s”？</string>
+    <string name="profiles_note">配置会保存外观、布局、按键名称、重映射、宏和体感。点按即可使用；使用期间的更改会保存到其中。</string>
+    <string name="bt_name">蓝牙名称</string>
+    <string name="bt_name_hint">手机名称</string>
+    <string name="bt_name_switch">Switch 模式下名称固定为“Pro Controller”：主机只接受这个名称。</string>
+    <string name="bt_name_note">配对时电脑、电视或其他手机显示的名称。留空则使用手机自己的名称。</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profiles_title">Game profiles</string>
+    <string name="profiles_none">None in use</string>
+    <string name="profiles_new">New profile</string>
+    <string name="profiles_name">Profile name</string>
+    <string name="profiles_rename">Rename</string>
+    <string name="profiles_delete">Delete</string>
+    <string name="profiles_detach">Stop using</string>
+    <string name="profiles_save">Save</string>
+    <string name="profiles_cancel">Cancel</string>
+    <string name="profiles_default_name">My game</string>
+    <string name="profiles_delete_confirm">Delete the profile “%1$s”?</string>
+    <string name="profiles_note">A profile keeps skin, layout, button names, remapping, macros and motion. Tap one to use it; while it is in use, whatever you change is saved into it.</string>
+    <string name="bt_name">Bluetooth name</string>
+    <string name="bt_name_hint">Phone name</string>
+    <string name="bt_name_switch">In Switch mode the name is always “Pro Controller”: the console only accepts that one.</string>
+    <string name="bt_name_note">The name the PC, TV or other phone shows when pairing. Empty: the name of the phone itself.</string>
+</resources>

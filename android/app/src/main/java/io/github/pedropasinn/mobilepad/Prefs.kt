@@ -92,6 +92,14 @@ class Prefs(context: Context) {
             .getOrDefault(io.github.pedropasinn.mobilepad.ui.ButtonNames.AUTO)
         set(value) = prefs.edit().putString(KEY_BUTTON_NAMES, value.name).apply()
 
+    /** Saved game profiles (see GameProfile) and the one in use ("" none). */
+    var profiles: List<GameProfile>
+        get() = GameProfile.listFromJson(prefs.getString(KEY_PROFILES, null))
+        set(value) = prefs.edit().putString(KEY_PROFILES, GameProfile.listToJson(value)).apply()
+    var activeProfile: String
+        get() = prefs.getString(KEY_ACTIVE_PROFILE, null) ?: ""
+        set(value) = prefs.edit().putString(KEY_ACTIVE_PROFILE, value).apply()
+
     /** App language: "" follows the system, otherwise a tag from MobilepadApp.LANGUAGES. */
     var language: String
         get() = prefs.getString(KEY_LANGUAGE, null) ?: ""
@@ -107,6 +115,8 @@ class Prefs(context: Context) {
         const val KEY_THEME = "theme"
         const val KEY_SKIN = "skin"
         const val KEY_REMAP = "remap"
+        const val KEY_PROFILES = "profiles"
+        const val KEY_ACTIVE_PROFILE = "active_profile"
         const val KEY_BUTTON_NAMES = "button_names"
         const val KEY_LAYOUT_LAND = "layout_land"
         const val KEY_LAYOUT_PORT = "layout_port"

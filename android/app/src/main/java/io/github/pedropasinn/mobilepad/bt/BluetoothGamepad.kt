@@ -43,6 +43,20 @@ class BluetoothGamepad(private val context: Context) {
     private var host: BluetoothDevice? = null
     private val prefs = context.getSharedPreferences("bluetooth", Context.MODE_PRIVATE)
 
+    /**
+     * Name hosts see when pairing in the generic mode; blank: the phone's own name. Saved here,
+     * so the keep-alive service uses it too. Applied at once while registered.
+     */
+    var customName: String
+        get() = prefs.getString(KEY_CUSTOM_NAME, null) ?: ""
+        set(value) {
+            prefs.edit().putString(KEY_CUSTOM_NAME, value.trim()).apply()
+            if (hid != null) runCatching { applyName() }
+        }
+
+    /** The phone's own Bluetooth name, even while a profile or [customName] replaces it. */
+    fun phoneName(): String? = prefs.getString(KEY_ORIGINAL_NAME, null) ?: runCatching { adapter?.name }.getOrNull()
+
     /** Changing it while registered re-registers with the new profile. */
     var profile: HidProfile = GenericGamepadProfile()
         set(value) {
@@ -138,7 +152,8 @@ class BluetoothGamepad(private val context: Context) {
      */
     private fun applyName() {
         val adapter = adapter ?: return
-        val wanted = profile.deviceName
+        // The Switch only accepts its own name; otherwise the user's choice, if any.
+        val wanted = profile.deviceName ?: customName.takeIf { it.isNotBlank() }
         if (wanted == null) {
             restoreName()
             return
@@ -207,6 +222,7 @@ class BluetoothGamepad(private val context: Context) {
 
     companion object {
         private const val KEY_ORIGINAL_NAME = "original_name"
+        private const val KEY_CUSTOM_NAME = "custom_name"
         private const val TAG = "BluetoothGamepad"
 
         private val TV_CLASSES = setOf(

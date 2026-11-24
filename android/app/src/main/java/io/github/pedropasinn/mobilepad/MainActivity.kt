@@ -90,6 +90,10 @@ class MainActivity : ComponentActivity() {
     private var layoutLand by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     private var layoutPort by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     private var editLayout by mutableStateOf(false)
+    /** Bumped when the Bluetooth name changes, so the panel reads it again. */
+    private var btNameTick by mutableStateOf(0)
+    private var profiles by mutableStateOf<List<GameProfile>>(emptyList())
+    private var activeProfile by mutableStateOf("")
     private var buttonNames by mutableStateOf(io.github.pedropasinn.mobilepad.ui.ButtonNames.AUTO)
     /** The editor was opened from the Controller page: Done goes back there. */
     private var editFromHome = false
@@ -237,6 +241,8 @@ class MainActivity : ComponentActivity() {
         deltaSkinId = prefs.deltaSkin
         remap = prefs.remap
         layoutLand = prefs.layoutLandscape
+        profiles = prefs.profiles
+        activeProfile = prefs.activeProfile
         buttonNames = prefs.buttonNames
         layoutPort = prefs.layoutPortrait
         input.remap = remap
@@ -336,6 +342,13 @@ class MainActivity : ComponentActivity() {
                 (status as? ConnectionStatus.Connected)?.target == "USB" -> io.github.pedropasinn.mobilepad.ui.Link.USB
                 status is ConnectionStatus.Connected -> io.github.pedropasinn.mobilepad.ui.Link.WIFI
                 else -> io.github.pedropasinn.mobilepad.ui.Link.NONE
+            }
+            // While a profile is in use, whatever changes is saved into it.
+            val motionNow by motion.settings.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(activeProfile, skin, deltaSkinId, layoutLand, layoutPort, buttonNames, remap, macroConfig, motionNow) {
+                val current = profiles.firstOrNull { it.id == activeProfile } ?: return@LaunchedEffect
+                val now = snapshotProfile(current.id, current.name)
+                if (now != current) saveProfiles(profiles.map { if (it.id == current.id) now else it })
             }
             val deltaSkins by skinLibrary.skins.collectAsState()
             val activeDelta = deltaSkins.firstOrNull { it.dir.name == deltaSkinId }
@@ -471,6 +484,20 @@ class MainActivity : ComponentActivity() {
                         layoutChanges = layoutLand.tweaks.size + layoutPort.tweaks.size,
                         buttonNames = buttonNames,
                         onButtonNames = { buttonNames = it; prefs.buttonNames = it },
+                        profiles = profiles,
+                        activeProfile = activeProfile,
+                        onApplyProfile = { id -> profiles.firstOrNull { it.id == id }?.let(::applyProfile) },
+                        onNewProfile = { name ->
+                            val p = snapshotProfile(GameProfile.newId(), name)
+                            saveProfiles(profiles + p)
+                            activeProfile = p.id; prefs.activeProfile = p.id
+                        },
+                        onRenameProfile = { id, name -> saveProfiles(profiles.map { if (it.id == id) it.copy(name = name) else it }) },
+                        onDeleteProfile = { id ->
+                            saveProfiles(profiles.filter { it.id != id })
+                            if (activeProfile == id) { activeProfile = ""; prefs.activeProfile = "" }
+                        },
+                        onDetachProfile = { activeProfile = ""; prefs.activeProfile = "" },
                         onEditLayout = { editLayout = true; editFromHome = true; showPad = true },
                         onResetLayout = {
                             layoutLand = io.github.pedropasinn.mobilepad.ui.PadLayout(); prefs.layoutLandscape = layoutLand
@@ -555,6 +582,35 @@ class MainActivity : ComponentActivity() {
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean =
         physical.onMotion(event) || super.dispatchGenericMotionEvent(event)
 
+    /** The current setup as a profile. */
+    private fun snapshotProfile(id: String, name: String) = GameProfile(
+        id, name, skin.name, deltaSkinId, layoutLand.encode(), layoutPort.encode(), buttonNames.name,
+        remap.entries.joinToString(",") { "${it.key}:${it.value}" }, macroConfig.toJson(), motion.settings.value.toJson(),
+    )
+
+    /** Puts a profile's whole setup to use and makes it the active one. */
+    private fun applyProfile(p: GameProfile) {
+        skin = runCatching { io.github.pedropasinn.mobilepad.ui.SkinId.valueOf(p.skin) }.getOrDefault(skin); prefs.skin = skin
+        deltaSkinId = p.deltaSkin; prefs.deltaSkin = deltaSkinId
+        layoutLand = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(p.layoutLand); prefs.layoutLandscape = layoutLand
+        layoutPort = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(p.layoutPort); prefs.layoutPortrait = layoutPort
+        buttonNames = runCatching { io.github.pedropasinn.mobilepad.ui.ButtonNames.valueOf(p.buttonNames) }.getOrDefault(buttonNames); prefs.buttonNames = buttonNames
+        remap = p.remap.split(',').mapNotNull { pair ->
+            val (a, b) = pair.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null
+            (a.toIntOrNull() ?: return@mapNotNull null) to (b.toIntOrNull() ?: return@mapNotNull null)
+        }.toMap()
+        prefs.remap = remap; input.remap = remap
+        runCatching { applyMacros(MacroConfig.parse(p.macros), save = true) }
+        val m = MotionSettings.parse(p.motion)
+        motion.update { m }
+        activeProfile = p.id; prefs.activeProfile = p.id
+    }
+
+    private fun saveProfiles(list: List<GameProfile>) {
+        profiles = list
+        prefs.profiles = list
+    }
+
     private fun applyMacros(config: MacroConfig, save: Boolean) {
         macroConfig = config
         macros.config = config
@@ -562,6 +618,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun bluetoothPanel(state: BluetoothGamepad.State): BluetoothPanel {
+        @Suppress("UNUSED_VARIABLE") val tick = btNameTick
         val active = state !is BluetoothGamepad.State.Off &&
             state !is BluetoothGamepad.State.Unsupported && state !is BluetoothGamepad.State.Failed
         val status = when (state) {
@@ -595,6 +652,9 @@ class MainActivity : ComponentActivity() {
             },
             onDisable = ::disableBluetooth,
             profileId = bluetoothProfileId,
+            btName = bluetooth.customName,
+            phoneName = bluetooth.phoneName() ?: "",
+            onBtName = { bluetooth.customName = it; btNameTick++ },
             onProfile = { id ->
                 prefs.bluetoothProfile = id
                 useBluetoothProfile(id)

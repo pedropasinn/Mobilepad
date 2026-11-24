@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profiles_title">ゲームプロファイル</string>
+    <string name="profiles_none">使用なし</string>
+    <string name="profiles_new">新しいプロファイル</string>
+    <string name="profiles_name">プロファイル名</string>
+    <string name="profiles_rename">名前を変更</string>
+    <string name="profiles_delete">削除</string>
+    <string name="profiles_detach">使用をやめる</string>
+    <string name="profiles_save">保存</string>
+    <string name="profiles_cancel">キャンセル</string>
+    <string name="profiles_default_name">マイゲーム</string>
+    <string name="profiles_delete_confirm">プロファイル「%1$s」を削除しますか？</string>
+    <string name="profiles_note">プロファイルにはスキン、配置、ボタン表記、リマップ、マクロ、モーションが保存されます。タップで使用し、使用中の変更はそのプロファイルに保存されます。</string>
+    <string name="bt_name">Bluetooth 名</string>
+    <string name="bt_name_hint">端末の名前</string>
+    <string name="bt_name_switch">Switch モードでは名前は常に「Pro Controller」です（本体がそれしか受け付けません）。</string>
+    <string name="bt_name_note">ペアリング時に PC、テレビ、他の端末に表示される名前。空欄なら端末の名前。</string>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profiles_title">Perfis de jogo</string>
+    <string name="profiles_none">Nenhum em uso</string>
+    <string name="profiles_new">Novo perfil</string>
+    <string name="profiles_name">Nome do perfil</string>
+    <string name="profiles_rename">Renomear</string>
+    <string name="profiles_delete">Excluir</string>
+    <string name="profiles_detach">Parar de usar</string>
+    <string name="profiles_save">Salvar</string>
+    <string name="profiles_cancel">Cancelar</string>
+    <string name="profiles_default_name">Meu jogo</string>
+    <string name="profiles_delete_confirm">Excluir o perfil “%1$s”?</string>
+    <string name="profiles_note">Um perfil guarda skin, layout, nomes dos botões, remapeamento, macros e movimento. Toque num para usar; enquanto ele estiver em uso, o que você mudar fica salvo nele.</string>
+    <string name="bt_name">Nome no Bluetooth</string>
+    <string name="bt_name_hint">Nome do celular</string>
+    <string name="bt_name_switch">No modo Switch o nome é sempre “Pro Controller”: o console só aceita esse.</string>
+    <string name="bt_name_note">É o nome que o PC, a TV ou o outro celular mostram ao parear. Vazio: o nome do próprio celular.</string>
+</resources>

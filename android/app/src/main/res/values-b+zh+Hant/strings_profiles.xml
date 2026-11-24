@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profiles_title">遊戲設定檔</string>
+    <string name="profiles_none">未使用</string>
+    <string name="profiles_new">新增設定檔</string>
+    <string name="profiles_name">設定檔名稱</string>
+    <string name="profiles_rename">重新命名</string>
+    <string name="profiles_delete">刪除</string>
+    <string name="profiles_detach">停止使用</string>
+    <string name="profiles_save">儲存</string>
+    <string name="profiles_cancel">取消</string>
+    <string name="profiles_default_name">我的遊戲</string>
+    <string name="profiles_delete_confirm">刪除設定檔「%1$s」？</string>
+    <string name="profiles_note">設定檔會儲存外觀、配置、按鍵名稱、重新對應、巨集和體感。輕觸即可使用；使用期間的變更會儲存到其中。</string>
+    <string name="bt_name">藍牙名稱</string>
+    <string name="bt_name_hint">手機名稱</string>
+    <string name="bt_name_switch">Switch 模式下名稱固定為「Pro Controller」：主機只接受這個名稱。</string>
+    <string name="bt_name_note">配對時電腦、電視或其他手機顯示的名稱。留空則使用手機本身的名稱。</string>
+</resources>
