@@ -192,10 +192,10 @@ fun ControllerScreen(
                     val base = if (maxHeight > maxWidth) (maxWidth * 0.40f).coerceAtMost(170.dp) else (maxHeight * 0.42f).coerceAtMost(190.dp)
                     if (lay[PadPart.LSTICK].floating) FloatingStickZone(true, base * lay[PadPart.LSTICK].scale, { x, y ->
                         input.touch { it.copy(leftX = ControllerState.axis(x), leftY = ControllerState.axis(y)) }
-                    })
+                    }, onHeld = { FloatingHeld[PadPart.LSTICK] = it })
                     if (lay[PadPart.RSTICK].floating) FloatingStickZone(false, base * 0.85f * lay[PadPart.RSTICK].scale, { x, y ->
                         input.touch { it.copy(rightX = ControllerState.axis(x), rightY = ControllerState.axis(y)) }
-                    })
+                    }, onHeld = { FloatingHeld[PadPart.RSTICK] = it })
                 }
                 if (portrait != portraitNow) { portraitNow = portrait; partBounds.clear(); selectedPart = null }
                 if (portrait) {

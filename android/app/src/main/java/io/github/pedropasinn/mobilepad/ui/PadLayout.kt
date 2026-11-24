@@ -149,7 +149,11 @@ fun Modifier.tweak(key: String): Modifier {
         .graphicsLayer {
             scaleX = t.scale
             scaleY = t.scale
-            alpha = if (t.hidden) 0.25f else if (t.floating && !scope.editing) t.alpha * 0.35f else t.alpha
+            // A floating stick away under the thumb leaves its home empty: one stick on screen.
+            alpha = if (t.hidden) 0.25f else if (t.floating && !scope.editing && FloatingHeld[key] == true) 0f else t.alpha
         }
         .then(if (scope.editing) Modifier.onGloballyPositioned { scope.bounds[key] = it.boundsInRoot() } else Modifier)
 }
+
+/** Floating sticks currently held somewhere else than their home, by part key. */
+val FloatingHeld = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
