@@ -191,7 +191,10 @@ public sealed class PhoneSession : IDisposable
         if (message.Type != Protocol.TypeState || _pad is null) return;
         if (!ControllerState.TryDecode(message.Payload, out var s)) return;
         LastInput = DateTime.Now;
+        // Lab stages recv/submit (labs/SPEC.md): one volatile read when no lab run is active.
+        if (Lab.LabLog.Active) Lab.LabLog.Record(Lab.LabLog.StageRecv, s);
         lock (_pad) _pad.Update(s);
+        if (Lab.LabLog.Active) Lab.LabLog.Record(Lab.LabLog.StageSubmit, s);
     }
 
     private void OnFeedback(byte largeMotor, byte smallMotor, byte led)
