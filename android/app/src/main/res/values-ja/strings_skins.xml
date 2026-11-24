@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skin_cream">クリーム</string>
+    <string name="skin_frost">フロスト</string>
+    <string name="skin_ocean">オーシャン</string>
+    <string name="skin_sunset">サンセット</string>
+    <string name="skin_forest">フォレスト</string>
+    <string name="skin_smoke">スモーク</string>
+    <string name="skin_gold">ゴールド</string>
+    <string name="skin_mint">ミント</string>
+    <string name="skin_neon">ネオン</string>
+    <string name="skin_lavender">ラベンダー</string>
+</resources>

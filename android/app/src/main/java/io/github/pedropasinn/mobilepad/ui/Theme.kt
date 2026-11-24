@@ -1,5 +1,6 @@
 package io.github.pedropasinn.mobilepad.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import io.github.pedropasinn.mobilepad.R
+import io.github.pedropasinn.mobilepad.protocol.Buttons
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -149,8 +151,25 @@ fun MobilepadTheme(theme: AppTheme, content: @Composable () -> Unit) {
     }
 }
 
-/** Look of the on-screen controller, independent of the app theme. */
-enum class SkinId { VIOLET, ROSE, GRAPHITE }
+/**
+ * Look of the on-screen controller, independent of the app theme. Stored by name in the prefs, so
+ * entries can be added freely but never renamed. The gallery lists them in this order.
+ */
+enum class SkinId(@StringRes val nameRes: Int) {
+    VIOLET(R.string.skin_violet),
+    ROSE(R.string.skin_rose),
+    GRAPHITE(R.string.skin_graphite),
+    CREAM(R.string.skin_cream),
+    FROST(R.string.skin_frost),
+    OCEAN(R.string.skin_ocean),
+    SUNSET(R.string.skin_sunset),
+    FOREST(R.string.skin_forest),
+    SMOKE(R.string.skin_smoke),
+    GOLD(R.string.skin_gold),
+    MINT(R.string.skin_mint),
+    NEON(R.string.skin_neon),
+    LAVENDER(R.string.skin_lavender),
+}
 
 /**
  * A controller "shell": the body colour as a vertical gradient, and the buttons moulded on it.
@@ -173,6 +192,12 @@ class Skin(
     /** Ring lit while a stick or a toggle is active. */
     val glow: Color,
     val shadow: Color,
+    /**
+     * Optional body colour of single buttons, keyed by [io.github.pedropasinn.mobilepad.protocol.Buttons]
+     * mask (A, B, X, Y): a retro shell with coloured face buttons. Buttons not listed, and skins
+     * without it, use [buttonTop]/[buttonBottom].
+     */
+    val faceColors: Map<Int, Color>? = null,
 )
 
 val Skins = mapOf(
@@ -211,6 +236,142 @@ val Skins = mapOf(
         well = Color(0xFF07070A),
         glow = Accent,
         shadow = Color(0xFF000000),
+    ),
+    // Warm cream shell with grey buttons and coloured face buttons, like an old home console pad.
+    SkinId.CREAM to Skin(
+        shellTop = Color(0xFFF1EBDD),
+        shellBottom = Color(0xFFE0D6C2),
+        buttonTop = Color(0xFF5C5B61),
+        buttonBottom = Color(0xFF3D3C42),
+        buttonPressed = Color(0xFF75747C),
+        buttonInk = Color(0xFFE9E3D5),
+        shellInk = Color(0xFF6E6452),
+        well = Color(0x1F6E6452),
+        glow = Color(0xFFC8553D),
+        shadow = Color(0xFF9E9380),
+        faceColors = mapOf(
+            Buttons.A to Color(0xFFB84A33),
+            Buttons.B to Color(0xFFD9A441),
+            Buttons.X to Color(0xFF3F6FB0),
+            Buttons.Y to Color(0xFF4E9A5B),
+        ),
+    ),
+    // Icy white with pale blue buttons.
+    SkinId.FROST to Skin(
+        shellTop = Color(0xFFEAF2FB),
+        shellBottom = Color(0xFFCADBEC),
+        buttonTop = Color(0xFFFFFFFF),
+        buttonBottom = Color(0xFFD3E0EE),
+        buttonPressed = Color(0xFFB9CCE2),
+        buttonInk = Color(0xFF3F74AD),
+        shellInk = Color(0xFF4D6E91),
+        well = Color(0x1F3F74AD),
+        glow = Color(0xFF2F8FFF),
+        shadow = Color(0xFF8FA8C2),
+    ),
+    // Deep sea teal with aqua printing.
+    SkinId.OCEAN to Skin(
+        shellTop = Color(0xFF136870),
+        shellBottom = Color(0xFF0A434D),
+        buttonTop = Color(0xFF0C2C33),
+        buttonBottom = Color(0xFF061A1F),
+        buttonPressed = Color(0xFF1E4A52),
+        buttonInk = Color(0xFF6FD3CB),
+        shellInk = Color(0xFFA6E6DF),
+        well = Color(0x33000000),
+        glow = Color(0xFF8CF7EA),
+        shadow = Color(0xFF02181C),
+    ),
+    // Orange fading into magenta, plum buttons.
+    SkinId.SUNSET to Skin(
+        shellTop = Color(0xFFFF8A3D),
+        shellBottom = Color(0xFFD6336C),
+        buttonTop = Color(0xFF3B1531),
+        buttonBottom = Color(0xFF23091D),
+        buttonPressed = Color(0xFF562441),
+        buttonInk = Color(0xFFFFB48C),
+        shellInk = Color(0xFF4A0E2A),
+        well = Color(0x2E4A0E2A),
+        glow = Color(0xFFFFE3A3),
+        shadow = Color(0xFF6B1236),
+    ),
+    // Pine green with moss printing.
+    SkinId.FOREST to Skin(
+        shellTop = Color(0xFF33633F),
+        shellBottom = Color(0xFF1F4228),
+        buttonTop = Color(0xFF1B2C1E),
+        buttonBottom = Color(0xFF0E1810),
+        buttonPressed = Color(0xFF2E4733),
+        buttonInk = Color(0xFFB2D3A2),
+        shellInk = Color(0xFFC3DDB2),
+        well = Color(0x33000000),
+        glow = Color(0xFFDDF3B5),
+        shadow = Color(0xFF0A1A0D),
+    ),
+    // Smoked dark grey, soft silver printing.
+    SkinId.SMOKE to Skin(
+        shellTop = Color(0xFF3C3F46),
+        shellBottom = Color(0xFF222428),
+        buttonTop = Color(0xFF4C5059),
+        buttonBottom = Color(0xFF2E3138),
+        buttonPressed = Color(0xFF62666F),
+        buttonInk = Color(0xFFD0D4DC),
+        shellInk = Color(0xFF9196A0),
+        well = Color(0x40000000),
+        glow = Color(0xFFE8ECF4),
+        shadow = Color(0xFF0E0F12),
+    ),
+    // Black shell, brushed gold buttons.
+    SkinId.GOLD to Skin(
+        shellTop = Color(0xFF171512),
+        shellBottom = Color(0xFF0A0908),
+        buttonTop = Color(0xFFDDB862),
+        buttonBottom = Color(0xFFA47D2E),
+        buttonPressed = Color(0xFFEBD18E),
+        buttonInk = Color(0xFF3A2A0A),
+        shellInk = Color(0xFFB0924F),
+        well = Color(0xFF050404),
+        glow = Color(0xFFF2D27A),
+        shadow = Color(0xFF000000),
+    ),
+    // Candy: mint shell, bubblegum buttons.
+    SkinId.MINT to Skin(
+        shellTop = Color(0xFFC4F2DF),
+        shellBottom = Color(0xFF9EE3C6),
+        buttonTop = Color(0xFFF0749A),
+        buttonBottom = Color(0xFFD74F78),
+        buttonPressed = Color(0xFFBF3E66),
+        buttonInk = Color(0xFFFFFFFF),
+        shellInk = Color(0xFF287A5E),
+        well = Color(0x22287A5E),
+        glow = Color(0xFF167A58),
+        shadow = Color(0xFF6FBFA0),
+    ),
+    // Near-black with cyan and magenta neon.
+    SkinId.NEON to Skin(
+        shellTop = Color(0xFF100C1A),
+        shellBottom = Color(0xFF07060C),
+        buttonTop = Color(0xFF1C1729),
+        buttonBottom = Color(0xFF0D0A16),
+        buttonPressed = Color(0xFF3A2F5C),
+        buttonInk = Color(0xFF2EF2FF),
+        shellInk = Color(0xFFFF3D9E),
+        well = Color(0xFF050409),
+        glow = Color(0xFF2EF2FF),
+        shadow = Color(0xFF000000),
+    ),
+    // Pastel lavender, lilac printing.
+    SkinId.LAVENDER to Skin(
+        shellTop = Color(0xFFE6DCF8),
+        shellBottom = Color(0xFFCDBFEE),
+        buttonTop = Color(0xFFF8F4FF),
+        buttonBottom = Color(0xFFDCD0F4),
+        buttonPressed = Color(0xFFC2B0EC),
+        buttonInk = Color(0xFF6A4DAD),
+        shellInk = Color(0xFF65519E),
+        well = Color(0x226A4DAD),
+        glow = Color(0xFF7D5CE0),
+        shadow = Color(0xFFA595CF),
     ),
 )
 
