@@ -91,10 +91,12 @@ public sealed class CompanionServer : IDisposable
             session.Closed += s =>
             {
                 _sessions.TryRemove(s, out _);
+                Lab.LabLog.Link("down", s.IsUsb ? "usb" : "wifi");
                 Log.Write($"Disconnesso: {s.Describe()}");
                 SessionsChanged?.Invoke();
             };
             Log.Write(L.T($"Connessione da {session.Remote}", $"Connection from {session.Remote}", $"来自 {session.Remote} 的连接", $"來自 {session.Remote} 的連線", $"{session.Remote} から接続"));
+            Lab.LabLog.Link("up", session.IsUsb ? "usb" : "wifi");
             _ = session.RunAsync();
         }
     }

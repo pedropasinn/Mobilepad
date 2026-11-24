@@ -9,6 +9,9 @@ PC keys of macros into real key presses.
 | `Core/` | Shared by every OS: protocol, `CompanionServer` (TCP listener, LAN discovery), `PhoneSession` (handshake, UDP/TCP states, feedback), `AdbBridge` (USB), backend interfaces in `Platform.cs` |
 | `Windows/` | WinForms window with QR code; `ViGEmPad` (ViGEmBus) and `KeyboardInjector` (`SendInput` scan codes) |
 | `Linux/` | Console app with QR code in the terminal; `UinputPad` and `UinputKeyboard` on `/dev/uinput` |
+| `Core/Lab/` | Mobilepad Lab engine (`labs/SPEC.md`): recv/submit log, clock sync over ADB, XInput observer, run orchestration, analysis, history |
+| `Windows/Lab/` | Lab screen (button **Lab** in the header), charts, Windows.Gaming.Input observer for Bluetooth |
+| `Tests/` | Lab analysis tests: `dotnet test Tests` |
 
 A new OS needs an `IPlatform` that creates an `IVirtualPad` and an `IKeyboardOutput`, plus a small
 `Program.cs`.
@@ -48,3 +51,11 @@ games are forwarded to the phone.
   `IP:47800`. Firewall: TCP 47800, UDP 47800 (states) and 47801 (discovery).
 - **USB**: enable USB debugging and plug the phone in; the companion keeps
   `adb reverse tcp:47800 tcp:47800` in place by itself. In the app tap *Connetti via USB*.
+
+## Lab
+
+The **Lab** button in the header opens the measurement screen: pick a test, the link and its
+parameters, press Run. ADB must reach the phone on every link (clock sync, trigger, file
+collection). Runs are saved under `%LOCALAPPDATA%\Mobilepad\lab\runs\` (`meta.json`, `phone.csv`,
+`pc.csv`, `obs.csv`, `res.csv`, `summary.json`); formats and stage names are in `labs/SPEC.md`.
+Outside a run the instrumentation costs one volatile read per state.

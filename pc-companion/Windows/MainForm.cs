@@ -17,6 +17,8 @@ public sealed class MainForm : Form
     private readonly TextBox _log = new();
     private readonly PillButton _copy = new();
     private readonly PillButton _clear = new();
+    private readonly PillButton _labButton = new();
+    private LabForm? _labForm;
     private readonly System.Windows.Forms.Timer _copiedTimer = new() { Interval = 1600 };
 
     // Strings.
@@ -83,7 +85,12 @@ public sealed class MainForm : Form
         _clear.Glyph = Glyph.Clear;
         _clear.Click += (_, _) => _log.Clear();
 
-        Controls.AddRange([_log, _copy, _clear]);
+        // Mobilepad Lab (labs/SPEC.md): measurements in a window of its own.
+        _labButton.Text = "Lab";
+        _labButton.Glyph = "\uE9D9";
+        _labButton.Click += (_, _) => OpenLab();
+
+        Controls.AddRange([_log, _copy, _clear, _labButton]);
 
         ApplyScale();
         ClientSize = new Size(S(940), S(640));
@@ -115,7 +122,7 @@ public sealed class MainForm : Form
         _smallIconFont = Fonts.Px(Fonts.Icons, S(13));
 
         _log.Font = _monoFont;
-        foreach (var button in new[] { _copy, _clear })
+        foreach (var button in new[] { _copy, _clear, _labButton })
         {
             button.Font = _pillFont;
             button.IconFont = _smallIconFont;
@@ -168,6 +175,9 @@ public sealed class MainForm : Form
         var pillHeight = S(38);
         var pillWidth = S(42) + Draw.Measure(StatusText(), _pillFont).Width + S(16);
         _pill = new Rectangle(client.Width - margin - pillWidth, _headerTile.Top + (_headerTile.Height - pillHeight) / 2, pillWidth, pillHeight);
+        _labButton.Height = pillHeight;
+        _labButton.Width = _labButton.PreferredWidth(pillHeight);
+        _labButton.Location = new Point(_pill.X - S(10) - _labButton.Width, _pill.Y);
 
         var top = _headerTile.Bottom + S(22);
         var bottom = client.Height - margin;
@@ -385,6 +395,14 @@ public sealed class MainForm : Form
         DoLayout();
         _copiedTimer.Stop();
         _copiedTimer.Start();
+    }
+
+    private void OpenLab()
+    {
+        if (_labForm is null || _labForm.IsDisposed) _labForm = new LabForm(_server, _adb);
+        _labForm.Show();
+        if (_labForm.WindowState == FormWindowState.Minimized) _labForm.WindowState = FormWindowState.Normal;
+        _labForm.Activate();
     }
 
     private void UiThread(Action action)
