@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -61,7 +62,7 @@ import io.github.pedropasinn.mobilepad.screen.SaverState
 import io.github.pedropasinn.mobilepad.screen.ScreenSaver
 import io.github.pedropasinn.mobilepad.screen.ShizukuScreen
 import io.github.pedropasinn.mobilepad.ui.BluetoothPanel
-import io.github.pedropasinn.mobilepad.ui.ConnectScreen
+import io.github.pedropasinn.mobilepad.ui.HomeScreen
 import io.github.pedropasinn.mobilepad.ui.StatusKind
 import io.github.pedropasinn.mobilepad.ui.ControllerScreen
 import io.github.pedropasinn.mobilepad.ui.MacroEditorScreen
@@ -87,6 +88,8 @@ class MainActivity : ComponentActivity() {
     private var theme by mutableStateOf(io.github.pedropasinn.mobilepad.ui.AppTheme.DARK)
     private var skin by mutableStateOf(io.github.pedropasinn.mobilepad.ui.SkinId.VIOLET)
     private var deltaSkinId by mutableStateOf("")
+    private var previewSkinId by mutableStateOf<String?>(null)
+    private var remap by mutableStateOf<Map<Int, Int>>(emptyMap())
     private val skinLibrary by lazy { io.github.pedropasinn.mobilepad.skin.DeltaSkinLibrary(filesDir) }
     private var language by mutableStateOf("")
     private var homeSection by mutableStateOf(0)
@@ -107,10 +110,9 @@ class MainActivity : ComponentActivity() {
             val result = skinLibrary.import(contentResolver, uris)
             toast(str(R.string.skin_imported, result.added) +
                 if (result.skipped > 0) " · " + str(R.string.skin_skipped, result.skipped) else "")
-            // A single new skin is put to use right away.
+            // A single new skin opens in a preview, from which it can be put to use.
             if (result.added == 1 && uris.size == 1) skinLibrary.skins.value.maxByOrNull { it.dir.lastModified() }?.let {
-                deltaSkinId = it.dir.name
-                prefs.deltaSkin = it.dir.name
+                previewSkinId = it.dir.name
             }
         }
     }
@@ -198,6 +200,7 @@ class MainActivity : ComponentActivity() {
         bluetooth = (application as MobilepadApp).bluetooth
         useBluetoothProfile(prefs.bluetoothProfile)
         macros = MacroEngine(lifecycleScope)
+        macros.openedByTouch = { input.touchHeld() }
         applyMacros(
             runCatching { MacroConfig.parse(prefs.macroJson) }.getOrElse {
                 toast(str(R.string.macro_invalid, it.message ?: ""))
@@ -232,13 +235,15 @@ class MainActivity : ComponentActivity() {
         theme = prefs.theme
         skin = prefs.skin
         deltaSkinId = prefs.deltaSkin
+        remap = prefs.remap
+        input.remap = remap
         lifecycleScope.launch { skinLibrary.load() }
         language = prefs.language
-        requestedOrientation = orientation.android
         lifecycleScope.launch {
-            snapshotFlow { showPad }.collect { pad ->
+            snapshotFlow { showPad to orientation }.collect { (pad, chosen) ->
                 if (pad) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                requestedOrientation = if (pad) chosen.android else ActivityInfo.SCREEN_ORIENTATION_FULL_USER
             }
         }
         hideSystemBars()
@@ -318,6 +323,15 @@ class MainActivity : ComponentActivity() {
                 else -> StatusKind.IDLE
             }
             val deltaSkins by skinLibrary.skins.collectAsState()
+            val activeDelta = deltaSkins.firstOrNull { it.dir.name == deltaSkinId }
+            val builtInName = str(when (skin) {
+                io.github.pedropasinn.mobilepad.ui.SkinId.VIOLET -> R.string.skin_violet
+                io.github.pedropasinn.mobilepad.ui.SkinId.ROSE -> R.string.skin_rose
+                io.github.pedropasinn.mobilepad.ui.SkinId.GRAPHITE -> R.string.skin_graphite
+            })
+            val padStyle = activeDelta?.let { io.github.pedropasinn.mobilepad.ui.rememberDeltaStyle(it) }
+                ?: io.github.pedropasinn.mobilepad.ui.builtInStyle(skin, builtInName)
+            val amiiboEntries by amiiboLibrary.entries.collectAsState()
             val radial by macros.radial.collectAsState()
             val motionSettings by motion.settings.collectAsState()
             if (showMacros && showJson) {
@@ -348,8 +362,7 @@ class MainActivity : ComponentActivity() {
                     status = statusText,
                     blackout = saverState != SaverState.OFF,
                     radial = radial,
-                    skin = skin,
-                    deltaSkin = skinLibrary.find(deltaSkinId),
+                    style = padStyle,
                     statusKind = statusKind,
                     nintendoLayout = (bluetoothProfileId == SwitchProProfile.ID &&
                         btState is BluetoothGamepad.State.Connected) ||
@@ -390,29 +403,15 @@ class MainActivity : ComponentActivity() {
                     onAmiibo = if ((status as? ConnectionStatus.Connected)?.pcOs?.startsWith("Switch") == true) {
                         { macros.openRadial(AmiiboMenu.ID) }
                     } else null,
+                    macroConfig = macroConfig,
+                    onEditMacros = { showMacros = true },
+                    onOpenWheel = { id -> macros.openRadial(id) },
                 )
             } else {
-                ConnectScreen(
+                HomeScreen(
                     status = statusText,
                     statusKind = statusKind,
-                    skin = skin,
-                    onSkin = {
-                        skin = it
-                        prefs.skin = it
-                    },
-                    skins = io.github.pedropasinn.mobilepad.ui.SkinPanel(
-                        skins = deltaSkins,
-                        selected = deltaSkinId.takeIf { id -> deltaSkins.any { it.dir.name == id } },
-                        onSelect = { id -> deltaSkinId = id ?: ""; prefs.deltaSkin = deltaSkinId },
-                        onImport = { skinFiles.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
-                        onDelete = { s ->
-                            if (s.dir.name == deltaSkinId) { deltaSkinId = ""; prefs.deltaSkin = "" }
-                            lifecycleScope.launch { skinLibrary.delete(s) }
-                        },
-                    ),
                     initialTarget = prefs.lastTarget,
-                    saverMode = saverMode,
-                    shizuku = shizukuState,
                     onScan = ::scan,
                     found = foundHosts,
                     searching = searching,
@@ -423,33 +422,49 @@ class MainActivity : ComponentActivity() {
                     },
                     onUsb = { connection.connect(ConnectTarget.usb()) },
                     onConnect = ::connectTo,
-                    onTryLayout = { showPad = true },
-                    onMacros = { showMacros = true },
-                    onSaverMode = { saverMode = it; prefs.saverMode = it },
-                    theme = theme,
-                    onTheme = {
-                        theme = it
-                        prefs.theme = it
-                    },
-                    language = language,
+                    onPlay = { showPad = true },
+                    bluetooth = bluetoothPanel(btState),
+                    controller = io.github.pedropasinn.mobilepad.ui.ControllerPanel(
+                        builtIn = skin,
+                        onBuiltIn = { skin = it; prefs.skin = it },
+                        skins = deltaSkins,
+                        selected = activeDelta?.dir?.name,
+                        onSelect = { id -> deltaSkinId = id ?: ""; prefs.deltaSkin = deltaSkinId },
+                        onImport = { skinFiles.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+                        onDelete = { s ->
+                            if (s.dir.name == deltaSkinId) { deltaSkinId = ""; prefs.deltaSkin = "" }
+                            lifecycleScope.launch { skinLibrary.delete(s) }
+                        },
+                        preview = previewSkinId?.let { id -> deltaSkins.firstOrNull { it.dir.name == id } },
+                        onPreviewDone = { use ->
+                            if (use) previewSkinId?.let { deltaSkinId = it; prefs.deltaSkin = it }
+                            previewSkinId = null
+                        },
+                        currentName = activeDelta?.name ?: builtInName,
+                        macroSummary = str(R.string.macros_summary, macroConfig.macros.size, macroConfig.radials.size),
+                        onMacros = { showMacros = true },
+                        orientation = orientation,
+                        onOrientation = { orientation = it; prefs.orientation = it },
+                        remap = remap,
+                        onRemap = { remap = it; prefs.remap = it; input.remap = it },
+                    ),
+                    settings = io.github.pedropasinn.mobilepad.ui.SettingsPanel(
+                        theme = theme,
+                        onTheme = { theme = it; prefs.theme = it },
+                        language = language,
+                        onLanguage = {
+                            prefs.language = it
+                            (application as MobilepadApp).applyLanguage(it)
+                            language = it
+                        },
+                        saverMode = saverMode,
+                        onSaverMode = { saverMode = it; prefs.saverMode = it },
+                        shizuku = shizukuState,
+                        onShizukuPermission = { shizuku.requestPermission { refreshShizuku() } },
+                    ),
                     sectionIndex = homeSection,
                     onSection = { homeSection = it },
-                    onLanguage = {
-                        prefs.language = it
-                        (application as MobilepadApp).applyLanguage(it)
-                        language = it
-                    },
-                    orientation = orientation,
-                    onOrientation = {
-                        orientation = it
-                        prefs.orientation = it
-                        requestedOrientation = it.android
-                    },
-                    onShizukuPermission = {
-                        shizuku.requestPermission { refreshShizuku() }
-                    },
-                    bluetooth = bluetoothPanel(btState),
-                    motion = { io.github.pedropasinn.mobilepad.ui.MotionCard(motion) },
+                    motion = { wide -> io.github.pedropasinn.mobilepad.ui.MotionPage(motion, wide) },
                     amiibo = {
                         io.github.pedropasinn.mobilepad.ui.AmiiboCard(
                             amiiboLibrary,
@@ -458,6 +473,7 @@ class MainActivity : ComponentActivity() {
                             onDelete = { entry -> lifecycleScope.launch { amiiboLibrary.delete(entry) } },
                         )
                     },
+                    amiiboSummary = if (amiiboEntries.isEmpty()) str(R.string.amiibo_none) else str(R.string.amiibo_count, amiiboEntries.size),
                 )
             }
         }

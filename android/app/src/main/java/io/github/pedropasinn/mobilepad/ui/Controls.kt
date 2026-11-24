@@ -2,6 +2,13 @@ package io.github.pedropasinn.mobilepad.ui
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -88,14 +95,17 @@ fun PadButton(
     /** On/off buttons: lit ring while on. */
     selected: Boolean = false,
     icon: ImageVector? = null,
+    /** [Part] key: the imported skin's artwork for this button, when it has one, replaces the body. */
+    part: Int? = null,
 ) {
     val view = LocalView.current
     val s = LocalSkin.current
+    val art = part?.let { LocalSkinParts.current[it] }
     val callback by rememberUpdatedState(onChange)
     var pressed by remember { mutableStateOf(false) }
     Box(
-        modifier
-            .moulded(shape, pressed, selected)
+        (if (art != null) modifier.graphicsLayer { val k = if (pressed) 0.94f else 1f; scaleX = k; scaleY = k }
+        else modifier.moulded(shape, pressed, selected))
             .pointerInput(Unit) {
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
@@ -109,6 +119,12 @@ fun PadButton(
             },
         contentAlignment = Alignment.Center,
     ) {
+        if (art != null) {
+            // The artwork carries its own printing; a press darkens it.
+            Image(art, label, Modifier.matchParentSize().clip(shape), contentScale = ContentScale.Fit,
+                colorFilter = if (pressed) ColorFilter.tint(Color.Black.copy(alpha = 0.3f), BlendMode.SrcAtop) else null)
+            return@Box
+        }
         val ink = when {
             color != Color.Unspecified -> color
             selected -> s.glow
@@ -145,6 +161,7 @@ fun Stick(
 ) {
     val callback by rememberUpdatedState(onMove)
     val s = LocalSkin.current
+    val knobArt = LocalSkinParts.current[Part.STICK]
     var knob by remember { mutableStateOf(Offset.Zero) }
     var held by remember { mutableStateOf(false) }
     Canvas(
@@ -180,9 +197,13 @@ fun Stick(
         )
         drawCircle(Color.White.copy(alpha = 0.10f), radius - 1f, style = Stroke(2f))
         if (held) drawCircle(s.glow.copy(alpha = 0.55f), radius - 2f, style = Stroke(3f))
-        // Knob: shadow, moulded cap, concave centre.
+        // Knob: the skin's artwork, or shadow, moulded cap and concave centre.
         val k = radius * 0.46f
         val c = center + knob
+        if (knobArt != null) {
+            drawImage(knobArt, dstOffset = IntOffset((c.x - k).toInt(), (c.y - k).toInt()), dstSize = IntSize((2 * k).toInt(), (2 * k).toInt()))
+            return@Canvas
+        }
         drawCircle(s.shadow.copy(alpha = 0.45f), k, c + Offset(0f, k * 0.12f))
         drawCircle(
             Brush.verticalGradient(listOf(s.buttonTop, s.buttonBottom), startY = c.y - k, endY = c.y + k),
@@ -205,11 +226,13 @@ fun DPad(
 ) {
     val view = LocalView.current
     val s = LocalSkin.current
+    val art = LocalSkinParts.current[Part.DPAD]
     val callback by rememberUpdatedState(onChange)
     var current by remember { mutableIntStateOf(0) }
     Canvas(
         modifier
             .size(size)
+            .graphicsLayer { if (art != null) compositingStrategy = CompositingStrategy.Offscreen }
             .pointerInput(Unit) {
                 val center = Offset(this.size.width / 2f, this.size.height / 2f)
                 val deadZone = min(this.size.width, this.size.height) * 0.12f
@@ -233,6 +256,23 @@ fun DPad(
     ) {
         val w = this.size.width
         val arm = w / 3f
+        if (art != null) {
+            // Fit the artwork, then fade its corners: the cut-out may carry a bit of the skin's shell.
+            val fit = min(w / art.width, this.size.height / art.height)
+            val dw = art.width * fit
+            val dh = art.height * fit
+            drawImage(art, dstOffset = IntOffset(((w - dw) / 2).toInt(), ((this.size.height - dh) / 2).toInt()), dstSize = IntSize(dw.toInt(), dh.toInt()))
+            fun shade(x: Float, y: Float, on: Boolean) { if (on) drawCircle(Color.Black.copy(alpha = 0.28f), arm * 0.48f, Offset(x, y)) }
+            shade(w / 2, arm / 2, current and Buttons.DPAD_UP != 0)
+            shade(w / 2, w - arm / 2, current and Buttons.DPAD_DOWN != 0)
+            shade(arm / 2, w / 2, current and Buttons.DPAD_LEFT != 0)
+            shade(w - arm / 2, w / 2, current and Buttons.DPAD_RIGHT != 0)
+            drawRect(
+                Brush.radialGradient(0f to Color.Black, 0.74f to Color.Black, 1f to Color.Transparent, radius = w * 0.707f),
+                blendMode = BlendMode.DstIn,
+            )
+            return@Canvas
+        }
         val cross = crossPath(w, arm, arm * 0.22f)
         // Drop shadow, then the body with a lit top.
         translate(top = w * 0.025f) { drawPath(cross, s.shadow.copy(alpha = 0.5f)) }

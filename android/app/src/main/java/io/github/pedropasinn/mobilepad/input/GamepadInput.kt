@@ -35,6 +35,14 @@ class GamepadInput {
         publish()
     }
 
+    /** Button remapping: source button mask to target mask (0: disabled). Touch and physical input both go through it. */
+    @Volatile
+    var remap: Map<Int, Int> = emptyMap()
+        set(value) { field = value; publish() }
+
+    /** On-screen buttons currently held. */
+    fun touchHeld(): Boolean = touch.value.buttons != 0 || touch.value.leftTrigger > 0 || touch.value.rightTrigger > 0
+
     fun resetTouch() {
         touch.value = ControllerState.NEUTRAL
         publish()
@@ -42,6 +50,15 @@ class GamepadInput {
 
     @Synchronized
     private fun publish() {
-        _merged.value = ControllerState.merge(ControllerState.merge(touch.value, physical.value), motion.value)
+        val merged = ControllerState.merge(ControllerState.merge(touch.value, physical.value), motion.value)
+        _merged.value = if (remap.isEmpty()) merged else merged.copy(buttons = remapButtons(merged.buttons, remap))
     }
+}
+
+/** Applies [remap] to a button mask: remapped sources are cleared, then each pressed source sets its target. */
+fun remapButtons(buttons: Int, remap: Map<Int, Int>): Int {
+    var out = buttons
+    for (src in remap.keys) out = out and src.inv()
+    for ((src, dst) in remap) if (buttons and src != 0) out = out or dst
+    return out
 }

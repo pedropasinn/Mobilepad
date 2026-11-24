@@ -30,8 +30,8 @@ object AmiiboMenu {
     fun build(phone: List<PhoneItem>, console: List<String>): RadialMenu {
         val clear = RadialSlice(str(R.string.amiibo_remove), "⏏", CLEAR_COLOR, key = KEY_CLEAR)
         val sources = buildList {
-            if (phone.isNotEmpty()) add(Triple(str(R.string.amiibo_phone), "📱", phoneTree(phone)) to "phone")
-            if (console.isNotEmpty()) add(Triple("Switch", "🎮", consoleTree(console, "")) to "console")
+            if (phone.isNotEmpty()) add(Triple(str(R.string.amiibo_phone), "phone", phoneTree(phone)) to "phone")
+            if (console.isNotEmpty()) add(Triple("Switch", "gamepad", consoleTree(console, "")) to "console")
         }
         // With a single source its content goes straight on the first wheel; "Rimuovi" always
         // stays there, in the first slice.
@@ -46,7 +46,7 @@ object AmiiboMenu {
             .map { RadialSlice(it.name, initial(it.name), PHONE_COLOR, key = PHONE_PREFIX + it.key) }
         // Ungrouped dumps sit next to the group folders.
         val loose = slices(groups.remove("").orEmpty())
-        val folders = groups.map { (group, list) -> folder(group, "📁", slices(list), "phone/$group") }
+        val folders = groups.map { (group, list) -> folder(group, "folder", slices(list), "phone/$group") }
         return folders + loose
     }
 
@@ -55,7 +55,7 @@ object AmiiboMenu {
         val (nested, leaves) = paths.partition { '/' in it }
         val folders = nested.groupBy { it.substringBefore('/') }.toSortedMap(String.CASE_INSENSITIVE_ORDER)
             .map { (name, inside) ->
-                folder(name, "📁", consoleTree(inside.map { it.substringAfter('/') }, "$prefix$name/"), "console/$prefix$name")
+                folder(name, "folder", consoleTree(inside.map { it.substringAfter('/') }, "$prefix$name/"), "console/$prefix$name")
             }
         val amiibo = leaves.sortedBy { it.lowercase() }
             .map { RadialSlice(it, initial(it), CONSOLE_COLOR, key = CONSOLE_PREFIX + prefix + it) }
@@ -70,7 +70,7 @@ object AmiiboMenu {
         if (slices.size <= room) return slices
         val rest = slices.drop(room - 1)
         return slices.take(room - 1) +
-            RadialSlice(str(R.string.more), "➕", FOLDER_COLOR, key = "more", folder = menu("$id+", paginate(rest, "$id+")))
+            RadialSlice(str(R.string.more), "add", FOLDER_COLOR, key = "more", folder = menu("$id+", paginate(rest, "$id+")))
     }
 
     private fun menu(id: String, slices: List<RadialSlice>) = RadialMenu(id, Stick.RIGHT, slices, RadialMode.STICKY)

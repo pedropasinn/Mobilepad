@@ -20,6 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.runtime.key
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -47,6 +54,9 @@ import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sin
 
+/** Dark base of the wheel, the same on every skin. */
+private val WheelBase = Color(0xFF16141E)
+
 // Geometry shared by the drawing and the tap test: keep them together.
 private const val OUTER = 0.46f // of the shorter side
 private const val INNER = 0.30f // of the outer radius
@@ -70,6 +80,10 @@ fun RadialMenuOverlay(
     LaunchedEffect(Unit) { appear.animateTo(1f, tween(130, easing = FastOutSlowInEasing)) }
     BoxWithConstraints(modifier) {
         val nested = view.trail.size > 1
+        // A tap outside the wheel goes back (closing at the root), as on the hub.
+        if (view.sticky && onBack != null) {
+            Box(Modifier.fillMaxSize().pointerInput(view.menu, onBack) { detectTapGestures { onBack() } })
+        }
         RadialWheel(
             view.menu,
             view.highlighted,
@@ -85,6 +99,8 @@ fun RadialMenuOverlay(
                 view.trail.joinToString("  ›  "),
                 color = p.text,
                 fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = Rounded,
                 modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
             )
         }
@@ -96,7 +112,8 @@ fun RadialMenuOverlay(
                 str(R.string.radial_hint, confirm, cancel, str(if (nested) R.string.radial_back else R.string.radial_close)),
                 color = p.muted,
                 fontSize = 13.sp,
-                modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+                fontFamily = Rounded,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
             )
             if (onTap != null) {
                 val side = min(maxWidth, maxHeight) * (OUTER * 2)
@@ -139,6 +156,9 @@ fun RadialWheel(
 ) {
     val measurer = rememberTextMeasurer()
     val p = LocalPalette.current
+    // Vector icons of the slices (null: the icon text is drawn instead), and the folder badge.
+    val icons = menu.slices.mapIndexed { i, s -> key(i, s.icon) { SliceIcons.resolve(s.icon)?.let { rememberVectorPainter(it) } } }
+    val folder = rememberVectorPainter(Icons.Rounded.Folder)
     // Selection "pop": restarts on each new highlighted slice.
     val pop = remember { Animatable(1f) }
     LaunchedEffect(highlighted) {
@@ -157,8 +177,8 @@ fun RadialWheel(
         val gap = if (count == 1) 0f else (3.dp.toPx() * scale).coerceAtLeast(1.5f)
         val ringGap = 4.dp.toPx() * scale
 
-        // Faint track: the ring stays readable on any background.
-        drawCircle(p.background.copy(alpha = 0.55f), outer + 6.dp.toPx() * scale, center)
+        // Solid track: the ring reads the same over any controller skin.
+        drawCircle(WheelBase.copy(alpha = 0.94f), outer + 6.dp.toPx() * scale, center)
 
         menu.slices.forEachIndexed { i, slice ->
             val selected = i == highlighted
@@ -167,17 +187,17 @@ fun RadialWheel(
             val start = -90f + i * sweep - sweep / 2
             val path = ringSlice(center, inner + ringGap, r, start, if (count == 1) 359.9f else sweep, gap)
             val base = Color(slice.color)
-            drawPath(path, if (selected) base else lerp(p.surface, base, 0.42f))
+            drawPath(path, if (selected) base else lerp(WheelBase, base, 0.55f))
             drawPath(
                 path,
-                if (selected) Color.White.copy(alpha = 0.92f) else lerp(p.outline, base, 0.5f),
+                if (selected) Color.White.copy(alpha = 0.92f) else lerp(WheelBase, base, 0.85f),
                 style = Stroke(if (selected) 2.5.dp.toPx() else 1.dp.toPx()),
             )
         }
 
         // Hub: where the stick rests. A notch on its edge points at the selection.
-        drawCircle(p.surface, inner, center)
-        drawCircle(p.outline, inner, center, style = Stroke(1.5.dp.toPx()))
+        drawCircle(WheelBase, inner, center)
+        drawCircle(Color.White.copy(alpha = 0.14f), inner, center, style = Stroke(1.5.dp.toPx()))
         if (highlighted != null && highlighted in menu.slices.indices) {
             val mid = -90f + highlighted * sweep
             val ring = inner - 4.dp.toPx() * scale
@@ -197,9 +217,10 @@ fun RadialWheel(
             val text = measurer.measure(
                 hubText,
                 TextStyle(
-                    color = p.text,
+                    color = Color.White,
                     fontSize = (14 * scale).sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontFamily = Rounded,
                     textAlign = TextAlign.Center,
                 ),
                 overflow = TextOverflow.Ellipsis,
@@ -217,13 +238,16 @@ fun RadialWheel(
             val angle = (-90f + i * sweep) * PI.toFloat() / 180f
             val direction = Offset(cos(angle), sin(angle))
             val at = center + direction * (if (selected) mid * (1f + 0.04f * pop.value) else mid)
+            val vector = icons.getOrNull(i)
+            val iconSize = ((if (selected) 30 else 26) * scale).dp.toPx()
             val icon = measurer.measure(slice.icon, TextStyle(fontSize = ((if (selected) 32 else 28) * scale).sp))
             val label = measurer.measure(
                 slice.label,
                 TextStyle(
-                    color = if (selected) Color.White else p.text.copy(alpha = 0.82f),
+                    color = if (selected) Color.White else Color.White.copy(alpha = 0.85f),
                     fontSize = (13 * scale).sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.Bold,
+                    fontFamily = Rounded,
                     textAlign = TextAlign.Center,
                 ),
                 overflow = TextOverflow.Ellipsis,
@@ -231,18 +255,26 @@ fun RadialWheel(
                 constraints = Constraints(maxWidth = labelWidth.toInt()),
             )
             val hasIcon = slice.icon.isNotEmpty()
-            val spacing = if (hasIcon) 2.dp.toPx() * scale else 0f
-            val total = (if (hasIcon) icon.size.height else 0) + spacing + label.size.height
+            val iconHeight = if (vector != null) iconSize else icon.size.height.toFloat()
+            val spacing = if (hasIcon) 4.dp.toPx() * scale else 0f
+            val total = (if (hasIcon) iconHeight else 0f) + spacing + label.size.height
             var y = at.y - total / 2f
-            if (hasIcon) {
+            if (vector != null) {
+                translate(at.x - iconSize / 2f, y) {
+                    with(vector) { draw(Size(iconSize, iconSize), colorFilter = ColorFilter.tint(Color.White)) }
+                }
+                y += iconSize + spacing
+            } else if (hasIcon) {
                 drawText(icon, topLeft = Offset(at.x - icon.size.width / 2f, y))
                 y += icon.size.height + spacing
             }
             drawText(label, topLeft = Offset(at.x - label.size.width / 2f, y))
             if (slice.isFolder) {
-                val badge = measurer.measure("📁", TextStyle(fontSize = (11 * scale).sp))
+                val b = 12.dp.toPx() * scale
                 val spot = center + direction * (outer * 0.9f)
-                drawText(badge, topLeft = spot - Offset(badge.size.width / 2f, badge.size.height / 2f))
+                translate(spot.x - b / 2f, spot.y - b / 2f) {
+                    with(folder) { draw(Size(b, b), colorFilter = ColorFilter.tint(Color.White.copy(alpha = 0.8f))) }
+                }
             }
         }
     }

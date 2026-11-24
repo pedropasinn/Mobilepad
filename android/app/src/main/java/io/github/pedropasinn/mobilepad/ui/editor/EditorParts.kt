@@ -297,35 +297,35 @@ fun ActionListEditor(actions: List<Action>, onChange: (List<Action>) -> Unit) {
 
 private fun Float.round2() = (this * 100).roundToInt() / 100f
 
-val EMOJI = listOf(
-    "❤️", "🩹", "🧪", "💣", "🔫", "🗡️", "🏹", "🛡️", "🔄", "🎒", "🗺️", "🧭",
-    "💾", "📷", "⏸️", "▶️", "🔦", "🔥", "❄️", "⚡", "💀", "🎯", "🏃", "🦘",
-    "👊", "✋", "🚗", "🐎", "🔊", "🔇", "⚙️", "🏠", "💬", "👍", "⭐", "🔑",
-    "🚪", "⛏️", "🪓", "🍖", "💰", "🎵", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣",
-)
-
+/** Icon grid for slices; custom text (a letter, a number) stays possible. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun EmojiPicker(selected: String, onPick: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            EMOJI.forEach { emoji ->
+fun IconPicker(selected: String, onPick: (String) -> Unit) {
+    val current = io.github.pedropasinn.mobilepad.ui.SliceIcons.resolve(selected)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(
+                Modifier.size(42.dp).clip(RoundedCornerShape(12.dp))
+                    .background(if (selected.isEmpty()) Accent.copy(alpha = 0.3f) else LocalPalette.current.surfaceHigh)
+                    .clickable { onPick("") },
+                contentAlignment = Alignment.Center,
+            ) { Text("—", color = LocalPalette.current.muted, fontSize = 16.sp) }
+            io.github.pedropasinn.mobilepad.ui.SliceIcons.all.forEach { (key, vector) ->
+                val on = key == selected || (current != null && vector == current)
                 Box(
-                    Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (emoji == selected) Accent.copy(alpha = 0.25f) else Color.Transparent)
-                        .clickable { onPick(emoji) },
+                    Modifier.size(42.dp).clip(RoundedCornerShape(12.dp))
+                        .background(if (on) Accent else LocalPalette.current.surfaceHigh)
+                        .clickable { onPick(key) },
                     contentAlignment = Alignment.Center,
-                ) { Text(emoji, fontSize = 22.sp) }
+                ) { androidx.compose.material3.Icon(vector, key, tint = Color.White, modifier = Modifier.size(22.dp)) }
             }
         }
         OutlinedTextField(
-            value = selected,
+            value = if (current != null) "" else selected,
             onValueChange = { onPick(it.take(4)) },
             label = { Text(str(R.string.icon_or_text)) },
             singleLine = true,
-            modifier = Modifier.width(260.dp),
+            modifier = Modifier.width(220.dp),
         )
     }
 }

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import io.github.pedropasinn.mobilepad.amiibo.AmiiboLibrary
 
 /** Amiibo dumps stored in the app, for the Switch sysmodule (through emuiibo). */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun AmiiboCard(
     library: AmiiboLibrary,
@@ -37,19 +38,14 @@ fun AmiiboCard(
     val entries by library.entries.collectAsState()
     var expanded by remember { mutableStateOf(false) }
 
-    Card(
-        Icons.Rounded.Nfc,
-        Hue.GOLD,
-        str(R.string.amiibo_title),
-        str(R.string.amiibo_subtitle),
-        Modifier.fillMaxWidth(),
-    ) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Note(str(R.string.amiibo_subtitle))
         Text(
             str(R.string.amiibo_note),
             color = Faint,
             fontSize = 12.sp,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onImportFiles) { Text(str(R.string.amiibo_import_files)) }
             OutlinedButton(onClick = onImportFolder) { Text(str(R.string.amiibo_import_folder)) }
             Text(

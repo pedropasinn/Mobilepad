@@ -32,6 +32,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Explore
+import androidx.compose.material.icons.rounded.Lan
+import androidx.compose.material.icons.rounded.ScreenRotation
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.Vibration
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import io.github.pedropasinn.mobilepad.motion.AxisPreset
 import io.github.pedropasinn.mobilepad.motion.GyroMode
 import io.github.pedropasinn.mobilepad.motion.MotionController
@@ -47,139 +54,118 @@ private val ShakeButtons get() = listOf(
     "Back" to Buttons.BACK, "Start" to Buttons.START,
 )
 
-/** Motion settings: tilt steering, shake, real gyro (Switch, Bluetooth Pro Controller, DSU). */
+/**
+ * Motion settings as a list: each function on its own row with its switch, its options in the
+ * detail. Tilt steering, shake, real gyro (Switch, Bluetooth Pro Controller) and the DSU server.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MotionCard(motion: MotionController) {
+fun MotionPage(motion: MotionController, wide: Boolean) {
     val s by motion.settings.collectAsState()
     val steer by motion.steer.collectAsState()
     val dsuStatus by motion.dsu.status.collectAsState()
     val set = motion::update
+    var selected by rememberSaveable { mutableStateOf<String?>(if (wide) "gyro" else null) }
+    fun state(on: Boolean) = if (on) str(R.string.state_on_text) else str(R.string.state_off_text)
+    fun short(text: String) = text.split(" (", "（", "(").first().trim()
 
-    Card(
-        Icons.Rounded.Explore,
-        Hue.TEAL,
-        str(R.string.nav_motion),
-        str(R.string.motion_sub),
-        Modifier.fillMaxWidth(),
-    ) {
-        if (!motion.hasTilt) {
-            Text(str(R.string.no_sensors), color = Muted, fontSize = 13.sp)
-            return@Card
-        }
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            maxItemsInEachRow = if (LocalConfiguration.current.screenWidthDp < 600) 1 else 3,
-        ) {
-            // Real gyro
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (!motion.hasGyro) {
-                    Text(str(R.string.no_gyro), color = Muted, fontSize = 13.sp)
-                    return@Column
-                }
-                Toggle(str(R.string.gyro_toggle), s.gyro) { on -> set { it.copy(gyro = on) } }
-                Text(str(R.string.gyro_note),
-                    color = Faint, fontSize = 12.sp)
-                if (s.gyro) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(
-                            selected = s.gyroMode == GyroMode.SHAKE,
-                            onClick = { set { it.copy(gyroMode = GyroMode.SHAKE) } },
-                            label = { Text(str(R.string.shake_only)) },
-                        )
-                        FilterChip(
-                            selected = s.gyroMode == GyroMode.FULL,
-                            onClick = { set { it.copy(gyroMode = GyroMode.FULL) } },
-                            label = { Text(str(R.string.full)) },
-                        )
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilterChip(
-                            selected = s.axes == AxisPreset.KART,
-                            onClick = { set { it.copy(axes = AxisPreset.KART) } },
-                            label = { Text(str(R.string.axes_kart)) },
-                        )
-                        FilterChip(
-                            selected = s.axes == AxisPreset.CAPPY,
-                            onClick = { set { it.copy(axes = AxisPreset.CAPPY) } },
-                            label = { Text(str(R.string.axes_cappy)) },
-                        )
-                    }
-                    if (s.axes == AxisPreset.KART) {
-                        Setting(str(R.string.steer_sens), str(R.string.steer_sens_value, s.kartGain, (90 / s.kartGain).roundToInt()),
-                            s.kartGain, 1f..4f) { v -> set { it.copy(kartGain = (v * 4).roundToInt() / 4f) } }
-                    }
-                    Text(str(R.string.recenter_note),
-                        color = Faint, fontSize = 12.sp)
-                    if (s.gyroMode == GyroMode.SHAKE) {
-                        Text(str(R.string.shake_note),
-                            color = Faint, fontSize = 12.sp)
-                        Setting(str(R.string.shake_strength), "×%.1f".format(s.shakeGain), s.shakeGain, 1f..5f) { v ->
-                            set { it.copy(shakeGain = (v * 2).roundToInt() / 2f) }
-                        }
-                    } else {
-                        Text(str(R.string.full_note),
-                            color = Faint, fontSize = 12.sp)
-                    }
-                }
-                Toggle(str(R.string.dsu_toggle), s.dsu) { on -> set { it.copy(dsu = on) } }
-                Text(str(R.string.dsu_note), color = Faint, fontSize = 12.sp)
-                if (s.dsu) {
-                    val addresses = motion.localAddresses().joinToString(" · ").ifEmpty { str(R.string.no_network) }
-                    Text(str(R.string.dsu_where, addresses, MotionSettings.DSU_PORT), color = Muted, fontSize = 13.sp)
-                    if (dsuStatus.isNotEmpty()) Text(dsuStatus, color = Muted, fontSize = 12.sp)
-                }
-            }
-            // Tilt steering
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Toggle(str(R.string.steer_toggle), s.steering) { on -> set { it.copy(steering = on) } }
-                Text(str(R.string.steer_note),
-                    color = Faint, fontSize = 12.sp)
-                if (s.steering) {
-                    SteerBar(steer ?: 0f)
-                    Setting(str(R.string.max_angle), "${s.maxAngle.roundToInt()}°", s.maxAngle, 10f..90f) { v ->
-                        set { it.copy(maxAngle = v.roundToInt().toFloat()) }
-                    }
-                    Setting(str(R.string.dead_zone), "${s.deadZone.roundToInt()}°", s.deadZone, 0f..15f) { v ->
-                        set { it.copy(deadZone = v.roundToInt().toFloat()) }
-                    }
-                    val curve = when {
-                        s.curve < 0.9f -> str(R.string.curve_fast)
-                        s.curve > 1.1f -> str(R.string.curve_precise)
-                        else -> str(R.string.curve_linear)
-                    }
-                    Setting(str(R.string.curve), "%.1f · %s".format(s.curve, curve), s.curve, 0.5f..2.5f) { v ->
-                        set { it.copy(curve = (v * 10).roundToInt() / 10f) }
-                    }
-                    Toggle(str(R.string.pitch), s.pitchY) { on -> set { it.copy(pitchY = on) } }
-                    OutlinedButton(onClick = motion::recenter) { Text(str(R.string.center)) }
-                    Text(str(R.string.center_note),
-                        color = Faint, fontSize = 12.sp)
-                }
-            }
-            // Shake
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Toggle(str(R.string.shake_toggle), s.shake) { on -> set { it.copy(shake = on) } }
-                Text(str(R.string.shake_toggle_note), color = Faint, fontSize = 12.sp)
-                if (s.shake) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        ShakeButtons.forEach { (label, mask) ->
-                            FilterChip(
-                                selected = s.shakeButton == mask,
-                                onClick = { set { it.copy(shakeButton = mask) } },
-                                label = { Text(label) },
-                            )
-                        }
-                    }
-                    Setting(str(R.string.sensitivity), "${(s.shakeSensitivity * 100).roundToInt()}%", s.shakeSensitivity, 0f..1f) { v ->
-                        set { it.copy(shakeSensitivity = (v * 20).roundToInt() / 20f) }
-                    }
-                }
-            }
-        }
+    if (!motion.hasTilt) {
+        MasterDetail(
+            listOf(PaneItem("none", Icons.Rounded.Explore, Hue.SLATE, str(R.string.nav_motion), str(R.string.no_sensors))),
+            null, {}, wide,
+        )
+        return
     }
+    val items = buildList {
+        add(PaneItem(
+            "gyro", Icons.Rounded.Sensors, Hue.VIOLET, short(str(R.string.gyro_toggle)),
+            if (motion.hasGyro) state(s.gyro) else str(R.string.no_gyro),
+            trailing = if (motion.hasGyro) ({ AppSwitch(s.gyro, { on -> set { it.copy(gyro = on) } }) }) else null,
+        ) {
+            Note(str(R.string.gyro_note))
+            if (motion.hasGyro && s.gyro) {
+                Segmented(
+                    listOf(GyroMode.SHAKE to str(R.string.shake_only), GyroMode.FULL to str(R.string.full)),
+                    s.gyroMode, { m -> set { it.copy(gyroMode = m) } }, Modifier.fillMaxWidth(),
+                )
+                Segmented(
+                    listOf(AxisPreset.KART to str(R.string.axes_kart), AxisPreset.CAPPY to str(R.string.axes_cappy)),
+                    s.axes, { a -> set { it.copy(axes = a) } }, Modifier.fillMaxWidth(),
+                )
+                if (s.axes == AxisPreset.KART) {
+                    Setting(str(R.string.steer_sens), str(R.string.steer_sens_value, s.kartGain, (90 / s.kartGain).roundToInt()),
+                        s.kartGain, 1f..4f) { v -> set { it.copy(kartGain = (v * 4).roundToInt() / 4f) } }
+                }
+                if (s.gyroMode == GyroMode.SHAKE) {
+                    Setting(str(R.string.shake_strength), "×%.1f".format(s.shakeGain), s.shakeGain, 1f..5f) { v ->
+                        set { it.copy(shakeGain = (v * 2).roundToInt() / 2f) }
+                    }
+                    Note(str(R.string.shake_note))
+                } else {
+                    Note(str(R.string.full_note))
+                }
+                Note(str(R.string.recenter_note))
+            }
+        })
+        add(PaneItem(
+            "steer", Icons.Rounded.ScreenRotation, Hue.TEAL, short(str(R.string.steer_toggle)), state(s.steering),
+            trailing = { AppSwitch(s.steering, { on -> set { it.copy(steering = on) } }) },
+        ) {
+            Note(str(R.string.steer_note))
+            if (s.steering) {
+                SteerBar(steer ?: 0f)
+                Setting(str(R.string.max_angle), "${s.maxAngle.roundToInt()}°", s.maxAngle, 10f..90f) { v ->
+                    set { it.copy(maxAngle = v.roundToInt().toFloat()) }
+                }
+                Setting(str(R.string.dead_zone), "${s.deadZone.roundToInt()}°", s.deadZone, 0f..15f) { v ->
+                    set { it.copy(deadZone = v.roundToInt().toFloat()) }
+                }
+                val curve = when {
+                    s.curve < 0.9f -> str(R.string.curve_fast)
+                    s.curve > 1.1f -> str(R.string.curve_precise)
+                    else -> str(R.string.curve_linear)
+                }
+                Setting(str(R.string.curve), "%.1f · %s".format(s.curve, curve), s.curve, 0.5f..2.5f) { v ->
+                    set { it.copy(curve = (v * 10).roundToInt() / 10f) }
+                }
+                FieldRow(str(R.string.pitch)) { AppSwitch(s.pitchY, { on -> set { it.copy(pitchY = on) } }) }
+                OutlinedButton(onClick = motion::recenter) { Text(str(R.string.center)) }
+                Note(str(R.string.center_note))
+            }
+        })
+        add(PaneItem(
+            "shake", Icons.Rounded.Vibration, Hue.ORANGE, short(str(R.string.shake_toggle)), state(s.shake),
+            trailing = { AppSwitch(s.shake, { on -> set { it.copy(shake = on) } }) },
+        ) {
+            Note(str(R.string.shake_toggle_note))
+            if (s.shake) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ShakeButtons.forEach { (label, mask) ->
+                        FilterChip(
+                            selected = s.shakeButton == mask,
+                            onClick = { set { it.copy(shakeButton = mask) } },
+                            label = { Text(label) },
+                        )
+                    }
+                }
+                Setting(str(R.string.sensitivity), "${(s.shakeSensitivity * 100).roundToInt()}%", s.shakeSensitivity, 0f..1f) { v ->
+                    set { it.copy(shakeSensitivity = (v * 20).roundToInt() / 20f) }
+                }
+            }
+        })
+        if (motion.hasGyro) add(PaneItem(
+            "dsu", Icons.Rounded.Lan, Hue.BLUE, short(str(R.string.dsu_toggle)), state(s.dsu),
+            trailing = { AppSwitch(s.dsu, { on -> set { it.copy(dsu = on) } }) },
+        ) {
+            Note(str(R.string.dsu_note))
+            if (s.dsu) {
+                val addresses = motion.localAddresses().joinToString(" · ").ifEmpty { str(R.string.no_network) }
+                Text(str(R.string.dsu_where, addresses, MotionSettings.DSU_PORT), color = Ink, fontSize = 13.sp, fontFamily = Rounded)
+                if (dsuStatus.isNotEmpty()) Note(dsuStatus)
+            }
+        })
+    }
+    MasterDetail(items, selected, { selected = it }, wide)
 }
 
 @Composable
@@ -200,8 +186,8 @@ private fun Setting(
 ) {
     Column {
         Row {
-            Text(label, color = Muted, fontSize = 13.sp, modifier = Modifier.weight(1f))
-            Text(value, color = Ink, fontSize = 13.sp)
+            Text(label, color = Ink, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontFamily = Rounded, modifier = Modifier.weight(1f))
+            Text(value, color = AccentBright, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold, fontFamily = Rounded)
         }
         Slider(value = current.coerceIn(range), onValueChange = onChange, valueRange = range)
     }

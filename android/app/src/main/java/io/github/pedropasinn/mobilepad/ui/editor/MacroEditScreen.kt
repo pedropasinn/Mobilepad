@@ -1,5 +1,16 @@
 package io.github.pedropasinn.mobilepad.ui.editor
 
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.platform.LocalConfiguration
+import io.github.pedropasinn.mobilepad.ui.AppSwitch
+import io.github.pedropasinn.mobilepad.ui.FadingColumn
+import io.github.pedropasinn.mobilepad.ui.FieldRow
+import io.github.pedropasinn.mobilepad.ui.Hue
+import io.github.pedropasinn.mobilepad.ui.Note
+import io.github.pedropasinn.mobilepad.ui.SectionLabel
+import io.github.pedropasinn.mobilepad.ui.Segmented
+import androidx.compose.material.icons.Icons
 import io.github.pedropasinn.mobilepad.ui.screenBackground
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.SportsEsports
@@ -97,21 +108,65 @@ fun MacroEditScreen(
         }
     }
 
+    val wide = LocalConfiguration.current.screenWidthDp >= 600
+    val combo: @Composable ColumnScope.() -> Unit = {
+        io.github.pedropasinn.mobilepad.ui.Card(Icons.Rounded.SportsEsports, Hue.VIOLET, str(R.string.combo), str(R.string.combo_sub), Modifier.fillMaxWidth()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) {
+                    KeyCaps(describeButtons(trigger.buttons, trigger.leftTrigger, trigger.rightTrigger))
+                }
+                Button(onClick = { recording = true }, enabled = !recording) {
+                    Text(if (recording) str(R.string.recording) else str(R.string.record))
+                }
+            }
+            ButtonChips(trigger.buttons, trigger.leftTrigger, trigger.rightTrigger) { m, lt, rt ->
+                macro = macro.copy(trigger = trigger.copy(buttons = m, leftTrigger = lt, rightTrigger = rt))
+            }
+            SectionLabel(str(R.string.hold))
+            Segmented(HOLD_OPTIONS, trigger.holdMs, { ms -> macro = macro.copy(trigger = trigger.copy(holdMs = ms)) }, Modifier.fillMaxWidth())
+            FieldRow(str(R.string.consume)) {
+                AppSwitch(trigger.consume, { macro = macro.copy(trigger = trigger.copy(consume = it)) })
+            }
+        }
+    }
+    val action: @Composable ColumnScope.() -> Unit = {
+        io.github.pedropasinn.mobilepad.ui.Card(Icons.Rounded.Bolt, Hue.GOLD, str(R.string.action), str(R.string.action_sub), Modifier.fillMaxWidth()) {
+            Segmented(
+                listOf(false to str(R.string.action_sequence), true to str(R.string.open_wheel)),
+                macro.radial != null,
+                { wheel ->
+                    macro = if (!wheel) macro.copy(radial = null)
+                    else macro.copy(radial = radialIds.firstOrNull() ?: return@Segmented)
+                },
+                Modifier.fillMaxWidth(),
+            )
+            if (macro.radial != null) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    radialIds.forEach { id ->
+                        FilterChip(selected = macro.radial == id, onClick = { macro = macro.copy(radial = id) }, label = { Text(id) })
+                    }
+                }
+                Note(str(R.string.wheel_help))
+            } else {
+                ActionListEditor(macro.actions) { macro = macro.copy(actions = it) }
+                FieldRow(str(R.string.turbo)) { AppSwitch(macro.repeat, { macro = macro.copy(repeat = it) }) }
+            }
+        }
+    }
+
     Column(
         Modifier
             .fillMaxSize()
             .screenBackground()
             .windowInsetsPadding(WindowInsets.displayCutout)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ScreenHeader(str(R.string.edit_macro), onBack = onCancel) {
             Button(
                 onClick = { onSave(macro) },
                 enabled = trigger.size > 0 && (macro.radial != null || macro.actions.isNotEmpty()),
             ) { Text(str(R.string.save)) }
-            OutlinedButton(onClick = onCancel) { Text(str(R.string.cancel)) }
             onDelete?.let { TextButton(onClick = it) { Text(str(R.string.delete_macro), color = Danger) } }
         }
         OutlinedTextField(
@@ -121,66 +176,14 @@ fun MacroEditScreen(
             singleLine = true,
             modifier = Modifier.widthIn(max = 420.dp).fillMaxWidth(),
         )
-
-        io.github.pedropasinn.mobilepad.ui.Card(androidx.compose.material.icons.Icons.Rounded.SportsEsports, io.github.pedropasinn.mobilepad.ui.Hue.VIOLET, str(R.string.combo), str(R.string.combo_sub), Modifier.fillMaxWidth()) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Box(Modifier.align(Alignment.CenterVertically)) {
-                KeyCaps(describeButtons(trigger.buttons, trigger.leftTrigger, trigger.rightTrigger))
+        // Landscape: combo and action side by side, each scrolling on its own.
+        if (wide) {
+            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                FadingColumn(Modifier.weight(1f).fillMaxHeight(), content = combo)
+                FadingColumn(Modifier.weight(1f).fillMaxHeight(), content = action)
             }
-            OutlinedButton(onClick = { recording = true }, enabled = !recording) {
-                Text(if (recording) str(R.string.recording) else str(R.string.record))
-            }
-        }
-        ButtonChips(trigger.buttons, trigger.leftTrigger, trigger.rightTrigger) { m, lt, rt ->
-            macro = macro.copy(trigger = trigger.copy(buttons = m, leftTrigger = lt, rightTrigger = rt))
-        }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.Center) {
-            Text(str(R.string.hold), color = Muted, modifier = Modifier.align(Alignment.CenterVertically))
-            HOLD_OPTIONS.forEach { (ms, label) ->
-                FilterChip(
-                    selected = trigger.holdMs == ms,
-                    onClick = { macro = macro.copy(trigger = trigger.copy(holdMs = ms)) },
-                    label = { Text(label) },
-                )
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Switch(checked = trigger.consume, onCheckedChange = { macro = macro.copy(trigger = trigger.copy(consume = it)) })
-            Text(str(R.string.consume), color = Ink, modifier = Modifier.weight(1f, fill = false))
-        }
-        }
-
-        io.github.pedropasinn.mobilepad.ui.Card(androidx.compose.material.icons.Icons.Rounded.Bolt, io.github.pedropasinn.mobilepad.ui.Hue.GOLD, str(R.string.action), str(R.string.action_sub), Modifier.fillMaxWidth()) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
-                selected = macro.radial == null,
-                onClick = { macro = macro.copy(radial = null) },
-                label = { Text(str(R.string.action_sequence)) },
-            )
-            FilterChip(
-                selected = macro.radial != null,
-                onClick = { macro = macro.copy(radial = radialIds.firstOrNull() ?: return@FilterChip) },
-                enabled = radialIds.isNotEmpty(),
-                label = { Text(str(R.string.open_wheel)) },
-            )
-        }
-        if (macro.radial != null) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                radialIds.forEach { id ->
-                    FilterChip(selected = macro.radial == id, onClick = { macro = macro.copy(radial = id) }, label = { Text(id) })
-                }
-            }
-            Text(
-                str(R.string.wheel_help),
-                color = Muted,
-            )
         } else {
-            ActionListEditor(macro.actions) { macro = macro.copy(actions = it) }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Switch(checked = macro.repeat, onCheckedChange = { macro = macro.copy(repeat = it) })
-                Text(str(R.string.turbo), color = Ink, modifier = Modifier.weight(1f, fill = false))
-            }
-        }
+            FadingColumn(Modifier.fillMaxWidth().weight(1f)) { combo(); action() }
         }
     }
 }

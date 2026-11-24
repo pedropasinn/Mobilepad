@@ -58,6 +58,9 @@ class MacroEngine(
     private val scope: CoroutineScope,
     private val clock: () -> Long = SystemClock::uptimeMillis,
 ) {
+    /** True while on-screen buttons are held: the combo that opens a wheel came from touch. */
+    var openedByTouch: () -> Boolean = { false }
+
 
     var config: MacroConfig = MacroConfig.EMPTY
         set(value) {
@@ -270,7 +273,10 @@ class MacroEngine(
     private fun open(id: String, macro: Macro?): Boolean {
         val menu = resolve(id) ?: return false
         close()
-        session = Session(macro, menu.mode == RadialMode.STICKY, mutableListOf(Level(id, menu, null)))
+        // A hold wheel opened from the touchscreen cannot be aimed with the thumbs on its combo:
+        // it stays open until a slice is tapped, like a sticky one.
+        val sticky = menu.mode == RadialMode.STICKY || (macro != null && openedByTouch())
+        session = Session(macro, sticky, mutableListOf(Level(id, menu, null)))
         ignoreAngle = null
         show(null)
         return true

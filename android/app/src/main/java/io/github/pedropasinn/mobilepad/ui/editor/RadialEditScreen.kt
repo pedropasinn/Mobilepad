@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import io.github.pedropasinn.mobilepad.ui.scrollFade
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -110,7 +111,7 @@ fun RadialEditScreen(
             RadialWheel(
                 menu,
                 highlighted = selected.takeIf { it in menu.slices.indices },
-                modifier = Modifier.size(300.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier.size(if (narrow) 300.dp else 240.dp).align(Alignment.CenterHorizontally),
                 scale = 0.8f,
             )
             Text(str(R.string.tap_slice), color = Muted, fontSize = 12.sp)
@@ -119,13 +120,13 @@ fun RadialEditScreen(
                     FilterChip(
                         selected = i == selected,
                         onClick = { selected = i },
-                        label = { Text("${slice.icon} ${slice.label}".trim().ifEmpty { "#${i + 1}" }) },
+                        label = { Text(slice.label.trim().ifEmpty { "#${i + 1}" }) },
                     )
                 }
                 if (menu.slices.size < MAX_SLICES) AssistChip(
                     onClick = {
                         val color = PALETTE[menu.slices.size % PALETTE.size]
-                        menu = menu.copy(slices = menu.slices + RadialSlice(str(R.string.new_slice_label), "⭐", color))
+                        menu = menu.copy(slices = menu.slices + RadialSlice(str(R.string.new_slice_label), "star", color))
                         selected = menu.slices.lastIndex
                     },
                     label = { Text(str(R.string.add_slice)) },
@@ -139,29 +140,16 @@ fun RadialEditScreen(
                 supportingText = idError?.let { { Text(it) } },
                 singleLine = true,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(str(R.string.pick_with), color = Muted)
-                Stick.entries.forEach { stick ->
-                    FilterChip(
-                        selected = menu.stick == stick,
-                        onClick = { menu = menu.copy(stick = stick) },
-                        label = { Text(str(if (stick == Stick.LEFT) R.string.stick_left else R.string.stick_right)) },
-                    )
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(str(R.string.opening), color = Muted)
-                FilterChip(
-                    selected = menu.mode == RadialMode.HOLD,
-                    onClick = { menu = menu.copy(mode = RadialMode.HOLD) },
-                    label = { Text(str(R.string.mode_hold)) },
-                )
-                FilterChip(
-                    selected = menu.mode == RadialMode.STICKY,
-                    onClick = { menu = menu.copy(mode = RadialMode.STICKY) },
-                    label = { Text(str(R.string.mode_sticky)) },
-                )
-            }
+            io.github.pedropasinn.mobilepad.ui.SectionLabel(str(R.string.pick_with))
+            io.github.pedropasinn.mobilepad.ui.Segmented(
+                Stick.entries.map { it to str(if (it == Stick.LEFT) R.string.stick_left else R.string.stick_right) },
+                menu.stick, { menu = menu.copy(stick = it) }, Modifier.fillMaxWidth(),
+            )
+            io.github.pedropasinn.mobilepad.ui.SectionLabel(str(R.string.opening))
+            io.github.pedropasinn.mobilepad.ui.Segmented(
+                listOf(RadialMode.HOLD to str(R.string.mode_hold), RadialMode.STICKY to str(R.string.mode_sticky)),
+                menu.mode, { menu = menu.copy(mode = it) }, Modifier.fillMaxWidth(),
+            )
             Text(
                 if (menu.mode == RadialMode.HOLD) {
                     str(R.string.hold_help)
@@ -213,7 +201,7 @@ fun RadialEditScreen(
                 modifier = Modifier.width(260.dp),
             )
             Text(str(R.string.icon), color = Muted, fontSize = 13.sp)
-            EmojiPicker(slice.icon) { v -> updateSlice { it.copy(icon = v) } }
+            IconPicker(slice.icon) { v -> updateSlice { it.copy(icon = v) } }
             Text(str(R.string.bg_color), color = Muted, fontSize = 13.sp)
             ColorPalette(slice.color) { v -> updateSlice { it.copy(color = v) } }
             Text(str(R.string.when_chosen), color = Muted, fontSize = 13.sp)
@@ -277,8 +265,10 @@ fun RadialEditScreen(
         }
     } else {
         Row(screen.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            left(Modifier.width(340.dp).fillMaxHeight().verticalScroll(rememberScrollState()))
-            right(Modifier.fillMaxSize().verticalScroll(rememberScrollState()))
+            val leftScroll = rememberScrollState()
+            val rightScroll = rememberScrollState()
+            left(Modifier.width(340.dp).fillMaxHeight().scrollFade(leftScroll).verticalScroll(leftScroll))
+            right(Modifier.fillMaxSize().scrollFade(rightScroll).verticalScroll(rightScroll))
         }
     }
 }
@@ -289,9 +279,9 @@ fun newRadial(id: String) = RadialMenu(
     id = id,
     stick = Stick.RIGHT,
     slices = listOf(
-        RadialSlice(str(R.string.one), "1️⃣", PALETTE[0]),
-        RadialSlice(str(R.string.two), "2️⃣", PALETTE[3]),
-        RadialSlice(str(R.string.three), "3️⃣", PALETTE[5]),
-        RadialSlice(str(R.string.four), "4️⃣", PALETTE[6]),
+        RadialSlice(str(R.string.one), "1", PALETTE[0]),
+        RadialSlice(str(R.string.two), "2", PALETTE[3]),
+        RadialSlice(str(R.string.three), "3", PALETTE[5]),
+        RadialSlice(str(R.string.four), "4", PALETTE[6]),
     ),
 )

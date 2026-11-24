@@ -304,12 +304,12 @@ data class MacroConfig(
                   "id": "${str(R.string.ex_quick_id)}",
                   "stick": "RIGHT",
                   "slices": [
-                    { "label": "${str(R.string.ex_heal)}", "icon": "❤️", "color": "#C2373D", "actions": [ { "keys": ["1"] } ] },
-                    { "label": "${str(R.string.ex_grenade)}", "icon": "💣", "color": "#B7652A", "actions": [ { "keys": ["G"] } ] },
-                    { "label": "${str(R.string.ex_map)}", "icon": "🗺️", "color": "#2E7D4F", "actions": [ { "keys": ["M"] } ] },
-                    { "label": "${str(R.string.ex_save)}", "icon": "💾", "color": "#2F5FA8", "actions": [ { "keys": ["F5"] } ] },
-                    { "label": "${str(R.string.ex_reload)}", "icon": "🔄", "color": "#6B4BB8", "actions": [ { "press": ["X"], "ms": 80 } ] },
-                    { "label": "${str(R.string.ex_menu)}", "icon": "⏸️", "color": "#55595F", "actions": [ { "keys": ["ESC"] } ] }
+                    { "label": "${str(R.string.ex_heal)}", "icon": "heal", "color": "#C2373D", "actions": [ { "keys": ["1"] } ] },
+                    { "label": "${str(R.string.ex_grenade)}", "icon": "bomb", "color": "#B7652A", "actions": [ { "keys": ["G"] } ] },
+                    { "label": "${str(R.string.ex_map)}", "icon": "map", "color": "#2E7D4F", "actions": [ { "keys": ["M"] } ] },
+                    { "label": "${str(R.string.ex_save)}", "icon": "save", "color": "#2F5FA8", "actions": [ { "keys": ["F5"] } ] },
+                    { "label": "${str(R.string.ex_reload)}", "icon": "reload", "color": "#6B4BB8", "actions": [ { "press": ["X"], "ms": 80 } ] },
+                    { "label": "${str(R.string.ex_menu)}", "icon": "pause", "color": "#55595F", "actions": [ { "keys": ["ESC"] } ] }
                   ]
                 }
               ]

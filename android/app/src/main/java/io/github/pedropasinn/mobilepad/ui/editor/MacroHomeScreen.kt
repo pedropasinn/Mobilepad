@@ -1,5 +1,25 @@
 package io.github.pedropasinn.mobilepad.ui.editor
 
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.DonutLarge
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.style.TextOverflow
+import io.github.pedropasinn.mobilepad.ui.FadingColumn
+import io.github.pedropasinn.mobilepad.ui.Hue
+import io.github.pedropasinn.mobilepad.ui.IconTile
+import io.github.pedropasinn.mobilepad.ui.Note
+import io.github.pedropasinn.mobilepad.ui.Rounded
+import io.github.pedropasinn.mobilepad.ui.Segmented
+import io.github.pedropasinn.mobilepad.ui.glass
 import io.github.pedropasinn.mobilepad.ui.Chevron
 import io.github.pedropasinn.mobilepad.ui.screenBackground
 import androidx.compose.material.icons.rounded.Timer
@@ -134,100 +154,138 @@ fun MacroHomeScreen(
         null -> Unit
     }
 
+    val wide = LocalConfiguration.current.screenWidthDp >= 600
     Column(
         Modifier
             .fillMaxSize()
             .screenBackground()
             .windowInsetsPadding(WindowInsets.displayCutout)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ScreenHeader(str(R.string.nav_macros), onBack = onClose) {
-            OutlinedButton(onClick = onAdvanced) { Text(str(R.string.advanced)) }
-        }
-
-        // Macros
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Column(Modifier.align(Alignment.CenterVertically)) {
-                Text(str(R.string.nav_macros_short), color = Ink, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
-                Text(str(R.string.macros_sub), color = Muted, fontSize = 12.sp)
+            Button(onClick = { stack = listOf(Editing.MacroAt(-1)) }) {
+                Icon(Icons.Rounded.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(str(R.string.macro_word))
             }
-            Button(onClick = { stack = listOf(Editing.MacroAt(-1)) }) { Text(str(R.string.new_macro)) }
-        }
-        if (config.macros.isEmpty()) EmptyHint(str(R.string.no_macros))
-        config.macros.forEachIndexed { index, macro ->
-            ListRow(onClick = { stack = listOf(Editing.MacroAt(index)) }) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(macro.name, color = Ink, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-                    KeyCaps(describeButtons(macro.trigger.buttons, macro.trigger.leftTrigger, macro.trigger.rightTrigger))
-                    Text("→ " + describeOutput(macro), color = Muted, fontSize = 13.sp)
-                }
-                Chevron()
+            Button(onClick = { stack = listOf(Editing.Radial(null)) }) {
+                Icon(Icons.Rounded.Add, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(str(R.string.wheel_word))
+            }
+            OutlinedButton(onClick = onAdvanced) {
+                Icon(Icons.Rounded.Code, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text("JSON")
             }
         }
 
-        // Radial menus
-        Spacer(Modifier.height(4.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Column(Modifier.align(Alignment.CenterVertically)) {
-                Text(str(R.string.wheels), color = Ink, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                Text(str(R.string.wheels_sub), color = Muted, fontSize = 12.sp)
+        val macros: @Composable ColumnScope.() -> Unit = {
+            GroupHeader(Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros_short), config.macros.size, str(R.string.macros_sub))
+            if (config.macros.isEmpty()) EmptyHint(str(R.string.no_macros))
+            config.macros.forEachIndexed { index, macro ->
+                MacroRow(macro) { stack = listOf(Editing.MacroAt(index)) }
             }
-            Button(onClick = { stack = listOf(Editing.Radial(null)) }) { Text(str(R.string.new_wheel)) }
+            ComboWindowRow(config.comboWindowMs) { ms -> onConfig(config.copy(comboWindowMs = ms)) }
         }
-        if (config.radials.isEmpty()) EmptyHint(str(R.string.no_wheels))
-        config.radials.values.forEach { menu ->
-            val opener = config.macros.firstOrNull { it.radial == menu.id }
-            val parent = config.radials.values.firstOrNull { r -> r.slices.any { it.submenu == menu.id } }
-            ListRow(onClick = { stack = listOf(Editing.Radial(menu.id)) }) {
-                RadialWheel(menu, null, Modifier.size(96.dp), scale = 0.35f)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(menu.id, color = Ink, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        str(R.string.wheel_info, menu.slices.size, str(if (menu.mode == RadialMode.STICKY) R.string.mode_sticky else R.string.mode_hold)),
-                        color = Muted,
-                        fontSize = 13.sp,
-                    )
-                    when {
-                        opener != null -> KeyCaps(
-                            describeButtons(opener.trigger.buttons, opener.trigger.leftTrigger, opener.trigger.rightTrigger),
-                        )
-                        parent != null -> Text(str(R.string.sub_wheel_of, parent.id), color = Muted, fontSize = 13.sp)
-                        else -> Text(str(R.string.no_combo), color = Faint, fontSize = 13.sp)
-                    }
-                }
-                Chevron()
+        val wheels: @Composable ColumnScope.() -> Unit = {
+            GroupHeader(Icons.Rounded.DonutLarge, Hue.VIOLET, str(R.string.wheels), config.radials.size, str(R.string.wheels_sub))
+            if (config.radials.isEmpty()) EmptyHint(str(R.string.no_wheels))
+            config.radials.values.forEach { menu ->
+                WheelRow(menu, config) { stack = listOf(Editing.Radial(menu.id)) }
             }
         }
+        // Landscape: macros and wheels side by side, each scrolling on its own; portrait: one list.
+        if (wide) {
+            Row(Modifier.fillMaxWidth().weight(1f), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                FadingColumn(Modifier.weight(1f).fillMaxHeight(), spacing = 10.dp, content = macros)
+                FadingColumn(Modifier.weight(1f).fillMaxHeight(), spacing = 10.dp, content = wheels)
+            }
+        } else {
+            FadingColumn(Modifier.fillMaxWidth().weight(1f), spacing = 10.dp) {
+                macros()
+                Spacer(Modifier.height(6.dp))
+                wheels()
+            }
+        }
+    }
+}
 
-        // Combo window
-        Spacer(Modifier.height(4.dp))
-        io.github.pedropasinn.mobilepad.ui.Card(androidx.compose.material.icons.Icons.Rounded.Timer, io.github.pedropasinn.mobilepad.ui.Hue.BLUE, str(R.string.combo_window), str(R.string.combo_window_sub), Modifier.fillMaxWidth()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(0L, 30L, 50L, 80L, 120L).forEach { ms ->
-                    FilterChip(
-                        selected = config.comboWindowMs == ms,
-                        onClick = { onConfig(config.copy(comboWindowMs = ms)) },
-                        label = { Text(if (ms == 0L) str(R.string.off) else "$ms ms") },
-                    )
-                }
+/** Title of a group with its count and a one-line explanation. */
+@Composable
+private fun GroupHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, hue: Hue, title: String, count: Int, sub: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        IconTile(icon, hue, 36.dp)
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(title, color = Ink, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded)
+                Text("$count", color = Muted, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded,
+                    modifier = Modifier.clip(RoundedCornerShape(50)).background(LocalPalette.current.surfaceHigh).padding(horizontal = 8.dp, vertical = 1.dp))
             }
+            Text(sub, color = Muted, fontSize = 12.sp, fontFamily = Rounded, maxLines = 2)
+        }
+    }
+}
+
+/** A macro: name, the combo as key caps, and what it does. Also used by the controller's menu. */
+@Composable
+fun MacroRow(macro: Macro, onClick: (() -> Unit)? = null) {
+    val content: @Composable RowScope.() -> Unit = {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(macro.name, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            KeyCaps(describeButtons(macro.trigger.buttons, macro.trigger.leftTrigger, macro.trigger.rightTrigger))
+            Text("→ " + describeOutput(macro), color = Muted, fontSize = 12.sp, fontFamily = Rounded, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        if (onClick != null) Chevron()
+    }
+    if (onClick != null) ListRow(onClick = onClick, content = content)
+    else Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically, content = content)
+}
+
+/** A wheel: its miniature, name, slices and how it opens. Also used by the controller's menu. */
+@Composable
+fun WheelRow(menu: RadialMenu, config: MacroConfig, onClick: (() -> Unit)? = null) {
+    val opener = config.macros.firstOrNull { it.radial == menu.id }
+    val parent = config.radials.values.firstOrNull { r -> r.slices.any { it.submenu == menu.id } }
+    val content: @Composable RowScope.() -> Unit = {
+        RadialWheel(menu, null, Modifier.size(72.dp), scale = 0.3f)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Text(menu.id, color = Ink, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                str(R.string.combo_window_note),
-                color = Faint,
-                fontSize = 12.sp,
+                str(R.string.wheel_info, menu.slices.size, str(if (menu.mode == RadialMode.STICKY) R.string.mode_sticky else R.string.mode_hold)),
+                color = Muted, fontSize = 12.sp, fontFamily = Rounded,
             )
+            when {
+                opener != null -> KeyCaps(describeButtons(opener.trigger.buttons, opener.trigger.leftTrigger, opener.trigger.rightTrigger))
+                parent != null -> Text(str(R.string.sub_wheel_of, parent.id), color = Muted, fontSize = 12.sp, fontFamily = Rounded)
+                else -> Text(str(R.string.no_combo), color = Faint, fontSize = 12.sp, fontFamily = Rounded)
+            }
         }
+        if (onClick != null) Chevron()
+    }
+    if (onClick != null) ListRow(onClick = onClick, content = content)
+    else Row(Modifier.fillMaxWidth().glass(RoundedCornerShape(18.dp)).padding(horizontal = 14.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically, content = content)
+}
+
+/** How long the first button of a combo waits for the others before reaching the game. */
+@Composable
+private fun ComboWindowRow(current: Long, onChange: (Long) -> Unit) {
+    Column(Modifier.fillMaxWidth().glass(RoundedCornerShape(18.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconTile(Icons.Rounded.Timer, Hue.BLUE, 30.dp)
+            Text(str(R.string.combo_window), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded, modifier = Modifier.weight(1f))
+        }
+        Segmented(
+            listOf(0L, 30L, 50L, 80L, 120L).map { it to if (it == 0L) str(R.string.off) else "$it ms" },
+            current, onChange, Modifier.fillMaxWidth(),
+        )
+        Note(str(R.string.combo_window_sub) + " · " + str(R.string.combo_window_note))
     }
 }
 
 @Composable
 private fun EmptyHint(text: String) {
-    Text(text, color = Faint, fontSize = 13.sp, modifier = Modifier.padding(vertical = 4.dp))
+    Text(text, color = Faint, fontSize = 13.sp, fontFamily = Rounded, modifier = Modifier.padding(vertical = 4.dp))
 }
 
-private fun describeOutput(macro: Macro): String {
+internal fun describeOutput(macro: Macro): String {
     macro.radial?.let { return str(R.string.out_wheel, it) }
     val steps = macro.actions.joinToString(", ") { a ->
         when (a) {

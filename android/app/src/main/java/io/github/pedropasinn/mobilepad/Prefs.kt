@@ -76,6 +76,14 @@ class Prefs(context: Context) {
         get() = prefs.getString(KEY_DELTA_SKIN, null) ?: ""
         set(value) = prefs.edit().putString(KEY_DELTA_SKIN, value).apply()
 
+    /** Button remapping as "source:target,…" masks; empty: none. */
+    var remap: Map<Int, Int>
+        get() = (prefs.getString(KEY_REMAP, null) ?: "").split(',').mapNotNull { pair ->
+            val (a, b) = pair.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null
+            (a.toIntOrNull() ?: return@mapNotNull null) to (b.toIntOrNull() ?: return@mapNotNull null)
+        }.toMap()
+        set(value) = prefs.edit().putString(KEY_REMAP, value.entries.joinToString(",") { "${it.key}:${it.value}" }).apply()
+
     /** App language: "" follows the system, otherwise a tag from MobilepadApp.LANGUAGES. */
     var language: String
         get() = prefs.getString(KEY_LANGUAGE, null) ?: ""
@@ -90,6 +98,7 @@ class Prefs(context: Context) {
         const val KEY_ORIENTATION = "orientation"
         const val KEY_THEME = "theme"
         const val KEY_SKIN = "skin"
+        const val KEY_REMAP = "remap"
         const val KEY_DELTA_SKIN = "delta_skin"
         const val KEY_LANGUAGE = "language"
         const val KEY_MOTION_HINT = "motion_hint"
