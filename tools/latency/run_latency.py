@@ -128,17 +128,22 @@ def run(args):
         k = (phone_ns - off_a - at_a) / max(1, at_b - at_a)
         return phone_ns - (off_a + (off_b - off_a) * min(max(k, 0), 1))
 
-    lat, rows, j = [], [], 0
-    arrivals = sorted(t for t, _ in downs)
-    for i, s in enumerate(sent):
-        s_pc = to_pc(s)
-        while j < len(arrivals) and arrivals[j] < s_pc - 20e6:
-            j += 1
-        if j < len(arrivals) and arrivals[j] - s_pc < 400e6:
-            ms = (arrivals[j] - s_pc) / 1e6
+    # Each arrival belongs to the last press sent before it (a lost press must not shift every
+    # later match by one press); a press keeps its first arrival only.
+    sent_pc = [to_pc(s) for s in sent]
+    first = {}
+    k = 0
+    for t in sorted(t for t, _ in downs):
+        while k + 1 < len(sent_pc) and sent_pc[k + 1] <= t + 2e6:
+            k += 1
+        if sent_pc[k] <= t + 2e6 and k not in first:
+            first[k] = t
+    lat, rows = [], []
+    for i, s_pc in enumerate(sent_pc):
+        if i in first:
+            ms = (first[i] - s_pc) / 1e6
             lat.append(ms)
             rows.append((i, round(ms, 3)))
-            j += 1
         else:
             rows.append((i, ""))
 
