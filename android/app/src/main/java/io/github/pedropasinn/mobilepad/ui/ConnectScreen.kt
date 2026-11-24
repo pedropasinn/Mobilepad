@@ -80,6 +80,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Android
+import androidx.compose.material.icons.rounded.VideogameAsset
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.semantics.contentDescription
@@ -372,21 +375,26 @@ private fun ConnectPage(
     var selected by rememberSaveable { mutableStateOf<String?>(if (bluetooth.active) "bt" else "wifi") }
     MasterDetail(
         items = listOf(
-            PaneItem("wifi", Icons.Rounded.Wifi, Hue.TEAL, "Wi‑Fi", str(R.string.wifi_caption)) {
+            PaneItem("wifi", Icons.Rounded.Wifi, Hue.TEAL, "Wi‑Fi", str(R.string.wifi_caption), badges = listOf(Icons.Rounded.Computer, Icons.Rounded.VideogameAsset)) {
                 WifiDetail(initialTarget, onScan, found, searching, onSearch, onFound, onConnect)
             },
-            PaneItem("usb", Icons.Rounded.Usb, Hue.ORANGE, "USB", str(R.string.usb_caption)) {
+            PaneItem("usb", Icons.Rounded.Usb, Hue.ORANGE, "USB", str(R.string.usb_caption), badges = listOf(Icons.Rounded.Computer, Icons.Rounded.Bolt)) {
                 Note(str(R.string.usb_subtitle))
                 Button(onClick = onUsb, modifier = Modifier.fillMaxWidth().height(48.dp)) { Text(str(R.string.usb_connect)) }
                 Note(str(R.string.usb_note))
             },
-            PaneItem("bt", Icons.Rounded.Bluetooth, Hue.BLUE, "Bluetooth", bluetooth.status.ifEmpty { str(R.string.bt_caption) }) {
+            PaneItem(
+                "bt", Icons.Rounded.Bluetooth, Hue.BLUE, "Bluetooth", bluetooth.status.ifEmpty { str(R.string.bt_caption) },
+                // While active, the state says more than the icons.
+                badges = if (bluetooth.status.isEmpty()) listOf(Icons.Rounded.Computer, Icons.Rounded.Android, Icons.Rounded.VideogameAsset) else emptyList(),
+            ) {
                 BluetoothDetail(bluetooth)
             },
         ),
         selected = selected,
         onSelect = { selected = it },
         wide = wide,
+        listWidth = 210.dp,
     )
 }
 

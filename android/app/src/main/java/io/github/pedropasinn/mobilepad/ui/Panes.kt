@@ -36,6 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
@@ -96,6 +98,8 @@ class PaneItem(
     val summary: String = "",
     val trailing: (@Composable () -> Unit)? = null,
     val onOpen: (() -> Unit)? = null,
+    /** Small icons in place of the summary text (e.g. what a connection works with). */
+    val badges: List<ImageVector> = emptyList(),
     val detail: (@Composable ColumnScope.() -> Unit)? = null,
 )
 
@@ -112,11 +116,12 @@ fun MasterDetail(
     wide: Boolean,
     modifier: Modifier = Modifier,
     header: (@Composable ColumnScope.() -> Unit)? = null,
+    listWidth: Dp = 290.dp,
 ) {
     if (wide) {
         val current = items.firstOrNull { it.key == selected && it.detail != null } ?: items.firstOrNull { it.detail != null }
         Row(modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            FadingColumn(Modifier.width(290.dp).fillMaxHeight(), spacing = 6.dp) {
+            FadingColumn(Modifier.width(listWidth).fillMaxHeight(), spacing = 6.dp) {
                 header?.invoke(this)
                 items.forEach { item ->
                     PaneRow(item, selected = item.key == current?.key, expandable = false) {
@@ -132,7 +137,6 @@ fun MasterDetail(
             ) { item ->
                 if (item?.detail != null) {
                     Column(Modifier.fillMaxSize().glass()) {
-                        DetailHeader(item)
                         FadingColumn(Modifier.fillMaxSize(), padding = 16.dp) { item.detail.invoke(this) }
                     }
                 }
@@ -164,21 +168,6 @@ fun MasterDetail(
 }
 
 @Composable
-private fun DetailHeader(item: PaneItem) {
-    val p = LocalPalette.current
-    Row(
-        Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 0.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        IconTile(item.icon, item.hue, 28.dp)
-        Text(item.title, color = p.text, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
-            modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-        item.trailing?.invoke()
-    }
-}
-
-@Composable
 private fun PaneRow(
     item: PaneItem,
     selected: Boolean,
@@ -198,7 +187,15 @@ private fun PaneRow(
         Column(Modifier.weight(1f)) {
             Text(item.title, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
                 maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)
-            if (item.summary.isNotEmpty()) {
+            if (item.badges.isNotEmpty()) {
+                Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    item.badges.forEach { b ->
+                        Box(Modifier.size(22.dp).clip(CircleShape).background(p.surfaceHigh), contentAlignment = Alignment.Center) {
+                            Icon(b, null, tint = p.muted, modifier = Modifier.size(14.dp))
+                        }
+                    }
+                }
+            } else if (item.summary.isNotEmpty()) {
                 Text(item.summary, color = p.muted, fontSize = 12.sp, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
