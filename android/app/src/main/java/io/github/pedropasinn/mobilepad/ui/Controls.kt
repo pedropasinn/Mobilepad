@@ -1,6 +1,9 @@
 package io.github.pedropasinn.mobilepad.ui
 
+import android.os.Build
 import android.view.HapticFeedbackConstants
+import android.view.InputDevice
+import android.view.View
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.BlendMode
@@ -22,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -171,6 +175,7 @@ fun Stick(
     val callback by rememberUpdatedState(onMove)
     val s = LocalSkin.current
     val knobArt = LocalSkinParts.current[Part.STICK]
+    UnbufferedTouch()
     var knob by remember { mutableStateOf(Offset.Zero) }
     var held by remember { mutableStateOf(false) }
     Canvas(
@@ -238,6 +243,7 @@ fun DPad(
     val art = LocalSkinParts.current[Part.DPAD]
     val callback by rememberUpdatedState(onChange)
     var current by remember { mutableIntStateOf(0) }
+    UnbufferedTouch()
     Canvas(
         modifier
             .size(size)
@@ -338,3 +344,36 @@ private fun directionMask(angle: Float): Int {
 }
 
 val TriggerShape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp, bottomStart = 10.dp, bottomEnd = 10.dp)
+
+/**
+ * Touch moves are normally batched once per frame and resampled about 5 ms in the past; while
+ * [unbuffered] is on, each move reaches the stick/D-pad as soon as the screen reports it (on
+ * Android 11+). Turned on only while a Wi-Fi/USB host is connected: it raises the state rate to
+ * the touch sampling rate, which a TCP/UDP link takes easily but a Bluetooth HID link may not.
+ */
+object TouchDispatch {
+    var unbuffered by mutableStateOf(false)
+}
+
+/** Holders per view: the request is per view, and two sticks share it. Main thread only. */
+private val unbufferedHolders = java.util.WeakHashMap<View, Int>()
+
+@Composable
+private fun UnbufferedTouch() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !TouchDispatch.unbuffered) return
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val n = (unbufferedHolders[view] ?: 0) + 1
+        unbufferedHolders[view] = n
+        if (n == 1) view.requestUnbufferedDispatch(InputDevice.SOURCE_CLASS_POINTER)
+        onDispose {
+            val left = (unbufferedHolders[view] ?: 1) - 1
+            if (left > 0) {
+                unbufferedHolders[view] = left
+            } else {
+                unbufferedHolders.remove(view)
+                view.requestUnbufferedDispatch(InputDevice.SOURCE_CLASS_NONE)
+            }
+        }
+    }
+}

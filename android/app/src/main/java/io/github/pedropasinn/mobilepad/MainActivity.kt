@@ -286,6 +286,8 @@ class MainActivity : ComponentActivity() {
             connection.status.collect { status ->
                 if (status is ConnectionStatus.Connected) wifiLock.acquire() else if (wifiLock.isHeld) wifiLock.release()
                 if (status is ConnectionStatus.Connected) showPad = true
+                // Stick moves reach the PC as soon as the screen samples them (not once per frame).
+                io.github.pedropasinn.mobilepad.ui.TouchDispatch.unbuffered = status is ConnectionStatus.Connected
                 amiibo.available = status is ConnectionStatus.Connected &&
                     status.pcOs.startsWith("Switch") && "Mobilepad" in status.pcOs
                 if (status is ConnectionStatus.Failed) toast(str(R.string.connection_lost, status.reason))

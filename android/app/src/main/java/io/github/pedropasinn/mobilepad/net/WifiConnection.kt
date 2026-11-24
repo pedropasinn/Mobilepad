@@ -2,8 +2,10 @@ package io.github.pedropasinn.mobilepad.net
 
 import io.github.pedropasinn.mobilepad.str
 import io.github.pedropasinn.mobilepad.R
+import android.os.Process
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -31,6 +33,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.ByteBuffer
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 sealed interface ConnectionStatus {
@@ -46,6 +49,17 @@ sealed interface ConnectionStatus {
  */
 class WifiConnection(private val deviceId: Long) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    /**
+     * Controller states leave from their own thread, at display priority: on Dispatchers.IO the
+     * loop shares a pool with blocking reads and other work and wakes on whichever worker is free.
+     */
+    private val sendExecutor = Executors.newSingleThreadExecutor { task ->
+        Thread({
+            runCatching { Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_DISPLAY) }
+            task.run()
+        }, "mobilepad-send").apply { isDaemon = true }
+    }
+    private val sendDispatcher = sendExecutor.asCoroutineDispatcher()
     private val outgoing = Channel<ControllerState>(Channel.CONFLATED)
     // Every key change must arrive (press and release), so this one is not conflated.
     private val keyboard = Channel<KeyboardState>(Channel.UNLIMITED)
@@ -151,13 +165,13 @@ class WifiConnection(private val deviceId: Long) {
         if (target.usb || udpPort == 0) {
             // adb reverse carries only TCP: states go on the control channel.
             _status.value = ConnectionStatus.Connected(label, "$pcName, TCP")
-            sendLoop(::writeTcp)
+            withContext(sendDispatcher) { sendLoop(::writeTcp) }
         } else {
             val datagram = DatagramSocket().apply { connect(InetSocketAddress(address, udpPort)) }
             udp = datagram
             _status.value = ConnectionStatus.Connected(label, pcName)
             scope.launch { receiveUdp(datagram) }
-            sendLoop { packet -> datagram.send(DatagramPacket(packet, packet.size)) }
+            withContext(sendDispatcher) { sendLoop { packet -> datagram.send(DatagramPacket(packet, packet.size)) } }
         }
     }
 
@@ -296,6 +310,7 @@ class WifiConnection(private val deviceId: Long) {
     fun release() {
         disconnect()
         scope.cancel()
+        sendExecutor.shutdown()
     }
 
     private fun osName(code: Int) = when (code) {
