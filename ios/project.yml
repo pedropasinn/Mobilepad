@@ -1,0 +1,40 @@
+# Xcode project description for XcodeGen (`brew install xcodegen && xcodegen generate`).
+name: Mobilepad
+options:
+  bundleIdPrefix: io.github.pedropasinn.mobilepad
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  Mobilepad:
+    type: application
+    platform: iOS
+    sources: [Mobilepad]
+    info:
+      path: Mobilepad/Info.plist
+      properties:
+        CFBundleDisplayName: Mobilepad
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UIStatusBarHidden: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSLocalNetworkUsageDescription: Mobilepad looks for the companion and the Switch sysmodule on your Wi-Fi network and sends the controller input to them.
+        CFBundleURLTypes:
+          - CFBundleURLName: io.github.pedropasinn.mobilepad.connect
+            CFBundleURLSchemes: [mobilepad]
+        GCSupportsControllerUserInteraction: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.pedropasinn.mobilepad.ios
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: NO
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"

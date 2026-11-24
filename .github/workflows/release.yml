@@ -1,0 +1,150 @@
+name: Release
+
+# Started by hand (Actions → Release → Run workflow). The APK is only built with the project key
+# (ANDROID_KEYSTORE_* secrets); without them it is left out of the draft and attached by hand.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to create and release, e.g. v1.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Restore the signing key
+        id: key
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::No ANDROID_KEYSTORE_* secrets: the APK is left out, attach one signed with the project key."
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
+          echo "MOBILEPAD_KEYSTORE=release.jks" >> "$GITHUB_ENV"
+      - if: steps.key.outputs.skip != '1'
+        run: chmod +x gradlew
+      - if: steps.key.outputs.skip != '1'
+        run: ./gradlew testDebugUnitTest assembleRelease
+        env:
+          MOBILEPAD_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MOBILEPAD_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MOBILEPAD_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - if: steps.key.outputs.skip != '1'
+        run: cp app/build/outputs/apk/release/app-release.apk "Mobilepad-${{ inputs.tag }}.apk"
+      - if: steps.key.outputs.skip != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: android/Mobilepad-*.apk
+
+  companion-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: pc-companion/Windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o ../publish/win-x64
+      - run: Copy-Item ../publish/win-x64/MobilepadCompanion.exe "../MobilepadCompanion-${{ inputs.tag }}.exe"
+        shell: pwsh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: companion-windows
+          path: pc-companion/MobilepadCompanion-*.exe
+
+  companion-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pc-companion/Linux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: |
+          for rid in linux-x64 linux-arm64; do
+            dotnet publish -c Release -r $rid --self-contained -p:PublishSingleFile=true -o ../publish/$rid
+            tar -czf "../MobilepadCompanion-${{ inputs.tag }}-$rid.tar.gz" -C ../publish/$rid mobilepad-companion 70-mobilepad-uinput.rules
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: companion-linux
+          path: pc-companion/MobilepadCompanion-*.tar.gz
+
+  switch-sysmodule:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+    defaults:
+      run:
+        working-directory: switch-sysmodule
+    steps:
+      - uses: actions/checkout@v4
+      - run: apt-get update && apt-get install -y zip
+      - run: make dist && cd dist && zip -r "../Mobilepad-Switch-${{ inputs.tag }}.zip" atmosphere
+      - uses: actions/upload-artifact@v4
+        with:
+          name: switch-sysmodule
+          path: switch-sysmodule/Mobilepad-Switch-*.zip
+
+  ios:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - run: >
+          xcodebuild -project Mobilepad.xcodeproj -scheme Mobilepad -configuration Release
+          -sdk iphoneos -derivedDataPath build
+          CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Mobilepad.app Payload/
+          zip -qr "../Mobilepad-${{ inputs.tag }}.ipa" Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: Mobilepad-*.ipa
+
+  release:
+    needs: [android, companion-windows, companion-linux, switch-sysmodule, ios]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Release notes from this version's CHANGELOG section
+        env:
+          TAG: ${{ inputs.tag }}
+        run: awk -v v="${TAG#v}" '/^## /{ if (f) exit; f = index($0, v) > 0; next } f' CHANGELOG.md > notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          target_commitish: ${{ github.sha }}
+          draft: true
+          files: dist/*
+          body_path: notes.md

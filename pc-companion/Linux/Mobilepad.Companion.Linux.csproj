@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>mobilepad-companion</AssemblyName>
+    <RootNamespace>Mobilepad.Companion</RootNamespace>
+    <Version>0.1.0</Version>
+    <Product>Mobilepad Companion</Product>
+    <Description>Turns the Mobilepad Android app into a virtual Xbox 360 controller on Linux (uinput).</Description>
+    <Copyright>Mobilepad contributors · MIT License</Copyright>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Core\**\*.cs" />
+    <None Include="70-mobilepad-uinput.rules" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+
+</Project>
