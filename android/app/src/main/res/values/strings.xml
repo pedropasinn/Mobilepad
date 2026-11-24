@@ -344,4 +344,12 @@
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">Reset all?</string>
     <string name="shizuku_sub">Needed only for the Switch over Bluetooth: the shell confirms the pairing in time and gives the phone the gamepad class.</string>
+    <string name="motion_steer">Steering</string>
+    <string name="motion_gyro">Sensor</string>
+    <string name="motion_shake">Shake</string>
+    <string name="motion_dsu">DSU</string>
+    <string name="motion_works_with">Works with</string>
+    <string name="motion_what">What is sent</string>
+    <string name="motion_presses">Button pressed</string>
+    <string name="motion_dsu_address">Address for the emulator</string>
 </resources>

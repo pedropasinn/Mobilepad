@@ -344,4 +344,12 @@
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">すべて戻す？</string>
     <string name="shizuku_sub">Bluetooth で Switch に接続するときだけ必要です。ペアリングを時間内に承認し、端末をゲームパッドとして認識させます。</string>
+    <string name="motion_steer">ハンドル</string>
+    <string name="motion_gyro">センサー</string>
+    <string name="motion_shake">シェイク</string>
+    <string name="motion_dsu">DSU</string>
+    <string name="motion_works_with">対応</string>
+    <string name="motion_what">送信内容</string>
+    <string name="motion_presses">押すボタン</string>
+    <string name="motion_dsu_address">エミュレーター用アドレス</string>
 </resources>

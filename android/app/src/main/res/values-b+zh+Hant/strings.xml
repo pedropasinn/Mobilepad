@@ -344,4 +344,12 @@
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">全部還原？</string>
     <string name="shizuku_sub">僅在透過藍牙連接 Switch 時需要：及時確認配對，並讓手機顯示為手把。</string>
+    <string name="motion_steer">方向盤</string>
+    <string name="motion_gyro">感應器</string>
+    <string name="motion_shake">搖晃</string>
+    <string name="motion_dsu">DSU</string>
+    <string name="motion_works_with">適用於</string>
+    <string name="motion_what">傳送內容</string>
+    <string name="motion_presses">按下的按鍵</string>
+    <string name="motion_dsu_address">模擬器位址</string>
 </resources>

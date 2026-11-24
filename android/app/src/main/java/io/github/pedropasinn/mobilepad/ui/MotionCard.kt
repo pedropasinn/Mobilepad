@@ -3,6 +3,27 @@ package io.github.pedropasinn.mobilepad.ui
 import io.github.pedropasinn.mobilepad.str
 import io.github.pedropasinn.mobilepad.R
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.Android
+import androidx.compose.material.icons.rounded.Computer
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,8 +76,9 @@ private val ShakeButtons get() = listOf(
 )
 
 /**
- * Motion settings as a list: each function on its own row with its switch, its options in the
- * detail. Tilt steering, shake, real gyro (Switch, Bluetooth Pro Controller) and the DSU server.
+ * Motion functions as a short list (one line each, with its switch) beside a panel that explains
+ * the selected one, says what it works with and always shows its settings: faded and locked while
+ * the function is off, so the panel is never empty.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -65,9 +87,8 @@ fun MotionPage(motion: MotionController, wide: Boolean) {
     val steer by motion.steer.collectAsState()
     val dsuStatus by motion.dsu.status.collectAsState()
     val set = motion::update
-    var selected by rememberSaveable { mutableStateOf<String?>(if (wide) "gyro" else null) }
+    var selected by rememberSaveable { mutableStateOf<String?>(if (wide) "steer" else null) }
     fun state(on: Boolean) = if (on) str(R.string.state_on_text) else str(R.string.state_off_text)
-    fun short(text: String) = text.split(" (", "（", "(").first().trim()
 
     if (!motion.hasTilt) {
         MasterDetail(
@@ -78,47 +99,22 @@ fun MotionPage(motion: MotionController, wide: Boolean) {
     }
     val items = buildList {
         add(PaneItem(
-            "gyro", Icons.Rounded.Sensors, Hue.VIOLET, short(str(R.string.gyro_toggle)),
-            if (motion.hasGyro) state(s.gyro) else str(R.string.no_gyro),
-            trailing = if (motion.hasGyro) ({ AppSwitch(s.gyro, { on -> set { it.copy(gyro = on) } }) }) else null,
-        ) {
-            Note(str(R.string.gyro_note))
-            if (motion.hasGyro && s.gyro) {
-                Segmented(
-                    listOf(GyroMode.SHAKE to str(R.string.shake_only), GyroMode.FULL to str(R.string.full)),
-                    s.gyroMode, { m -> set { it.copy(gyroMode = m) } }, Modifier.fillMaxWidth(),
-                )
-                Segmented(
-                    listOf(AxisPreset.KART to str(R.string.axes_kart), AxisPreset.CAPPY to str(R.string.axes_cappy)),
-                    s.axes, { a -> set { it.copy(axes = a) } }, Modifier.fillMaxWidth(),
-                )
-                if (s.axes == AxisPreset.KART) {
-                    Setting(str(R.string.steer_sens), str(R.string.steer_sens_value, s.kartGain, (90 / s.kartGain).roundToInt()),
-                        s.kartGain, 1f..4f) { v -> set { it.copy(kartGain = (v * 4).roundToInt() / 4f) } }
-                }
-                if (s.gyroMode == GyroMode.SHAKE) {
-                    Setting(str(R.string.shake_strength), "×%.1f".format(s.shakeGain), s.shakeGain, 1f..5f) { v ->
-                        set { it.copy(shakeGain = (v * 2).roundToInt() / 2f) }
-                    }
-                    Note(str(R.string.shake_note))
-                } else {
-                    Note(str(R.string.full_note))
-                }
-                Note(str(R.string.recenter_note))
-            }
-        })
-        add(PaneItem(
-            "steer", Icons.Rounded.ScreenRotation, Hue.TEAL, short(str(R.string.steer_toggle)), state(s.steering),
+            "steer", Icons.Rounded.ScreenRotation, Hue.TEAL, str(R.string.motion_steer), state(s.steering),
             trailing = { AppSwitch(s.steering, { on -> set { it.copy(steering = on) } }) },
         ) {
-            Note(str(R.string.steer_note))
-            if (s.steering) {
-                SteerBar(steer ?: 0f)
-                Setting(str(R.string.max_angle), "${s.maxAngle.roundToInt()}°", s.maxAngle, 10f..90f) { v ->
-                    set { it.copy(maxAngle = v.roundToInt().toFloat()) }
-                }
-                Setting(str(R.string.dead_zone), "${s.deadZone.roundToInt()}°", s.deadZone, 0f..15f) { v ->
-                    set { it.copy(deadZone = v.roundToInt().toFloat()) }
+            FeatureHeader(Icons.Rounded.ScreenRotation, Hue.TEAL, str(R.string.steer_note),
+                listOf(Icons.Rounded.Computer, SwitchConsoleIcon, Icons.Rounded.Android))
+            Gate(s.steering) {
+                Row(horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    SteeringWheel(if (s.steering) steer ?: 0f else 0f, s.maxAngle, Modifier.size(if (wide) 132.dp else 112.dp))
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Setting(str(R.string.max_angle), "${s.maxAngle.roundToInt()}°", s.maxAngle, 10f..90f) { v ->
+                            set { it.copy(maxAngle = v.roundToInt().toFloat()) }
+                        }
+                        Setting(str(R.string.dead_zone), "${s.deadZone.roundToInt()}°", s.deadZone, 0f..15f) { v ->
+                            set { it.copy(deadZone = v.roundToInt().toFloat()) }
+                        }
+                    }
                 }
                 val curve = when {
                     s.curve < 0.9f -> str(R.string.curve_fast)
@@ -129,22 +125,57 @@ fun MotionPage(motion: MotionController, wide: Boolean) {
                     set { it.copy(curve = (v * 10).roundToInt() / 10f) }
                 }
                 FieldRow(str(R.string.pitch)) { AppSwitch(s.pitchY, { on -> set { it.copy(pitchY = on) } }) }
-                OutlinedButton(onClick = motion::recenter) { Text(str(R.string.center)) }
-                Note(str(R.string.center_note))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedButton(onClick = motion::recenter) { Text(str(R.string.center)) }
+                    Note(str(R.string.center_note))
+                }
             }
         })
         add(PaneItem(
-            "shake", Icons.Rounded.Vibration, Hue.ORANGE, short(str(R.string.shake_toggle)), state(s.shake),
+            "gyro", Icons.Rounded.Sensors, Hue.VIOLET, str(R.string.motion_gyro),
+            if (motion.hasGyro) state(s.gyro) else str(R.string.no_gyro),
+            trailing = if (motion.hasGyro) ({ AppSwitch(s.gyro, { on -> set { it.copy(gyro = on) } }) }) else null,
+        ) {
+            FeatureHeader(Icons.Rounded.Sensors, Hue.VIOLET, str(R.string.gyro_note), listOf(SwitchConsoleIcon))
+            if (!motion.hasGyro) { Note(str(R.string.no_gyro)); return@PaneItem }
+            Gate(s.gyro) {
+                SectionLabel(str(R.string.motion_what))
+                Segmented(
+                    listOf(GyroMode.FULL to str(R.string.full), GyroMode.SHAKE to str(R.string.shake_only)),
+                    s.gyroMode, { m -> set { it.copy(gyroMode = m) } }, Modifier.fillMaxWidth(),
+                )
+                Note(if (s.gyroMode == GyroMode.SHAKE) str(R.string.shake_note) else str(R.string.full_note))
+                SectionLabel(str(R.string.menu_axes))
+                Segmented(
+                    listOf(AxisPreset.KART to str(R.string.menu_axes_kart), AxisPreset.CAPPY to str(R.string.menu_axes_cappy)),
+                    s.axes, { a -> set { it.copy(axes = a) } }, Modifier.fillMaxWidth(),
+                )
+                if (s.axes == AxisPreset.KART) {
+                    Setting(str(R.string.steer_sens), str(R.string.steer_sens_value, s.kartGain, (90 / s.kartGain).roundToInt()),
+                        s.kartGain, 1f..4f) { v -> set { it.copy(kartGain = (v * 4).roundToInt() / 4f) } }
+                }
+                if (s.gyroMode == GyroMode.SHAKE) {
+                    Setting(str(R.string.shake_strength), "×%.1f".format(s.shakeGain), s.shakeGain, 1f..5f) { v ->
+                        set { it.copy(shakeGain = (v * 2).roundToInt() / 2f) }
+                    }
+                }
+                Note(str(R.string.recenter_note))
+            }
+        })
+        add(PaneItem(
+            "shake", Icons.Rounded.Vibration, Hue.ORANGE, str(R.string.motion_shake), state(s.shake),
             trailing = { AppSwitch(s.shake, { on -> set { it.copy(shake = on) } }) },
         ) {
-            Note(str(R.string.shake_toggle_note))
-            if (s.shake) {
+            FeatureHeader(Icons.Rounded.Vibration, Hue.ORANGE, str(R.string.shake_toggle_note),
+                listOf(Icons.Rounded.Computer, SwitchConsoleIcon, Icons.Rounded.Android))
+            Gate(s.shake) {
+                SectionLabel(str(R.string.motion_presses))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     ShakeButtons.forEach { (label, mask) ->
                         FilterChip(
                             selected = s.shakeButton == mask,
                             onClick = { set { it.copy(shakeButton = mask) } },
-                            label = { Text(label) },
+                            label = { Text(label, fontFamily = Rounded, fontWeight = FontWeight.Bold) },
                         )
                     }
                 }
@@ -154,18 +185,80 @@ fun MotionPage(motion: MotionController, wide: Boolean) {
             }
         })
         if (motion.hasGyro) add(PaneItem(
-            "dsu", Icons.Rounded.Lan, Hue.BLUE, short(str(R.string.dsu_toggle)), state(s.dsu),
+            "dsu", Icons.Rounded.Lan, Hue.BLUE, str(R.string.motion_dsu), state(s.dsu),
             trailing = { AppSwitch(s.dsu, { on -> set { it.copy(dsu = on) } }) },
         ) {
-            Note(str(R.string.dsu_note))
-            if (s.dsu) {
+            FeatureHeader(Icons.Rounded.Lan, Hue.BLUE, str(R.string.dsu_note), listOf(Icons.Rounded.Computer))
+            Gate(s.dsu) {
                 val addresses = motion.localAddresses().joinToString(" · ").ifEmpty { str(R.string.no_network) }
-                Text(str(R.string.dsu_where, addresses, MotionSettings.DSU_PORT), color = Ink, fontSize = 13.sp, fontFamily = Rounded)
-                if (dsuStatus.isNotEmpty()) Note(dsuStatus)
+                Column(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(LocalPalette.current.surfaceHigh).padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    SectionLabel(str(R.string.motion_dsu_address))
+                    Text(str(R.string.dsu_where, addresses, MotionSettings.DSU_PORT), color = Ink, fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold, fontFamily = Rounded)
+                }
+                if (s.dsu && dsuStatus.isNotEmpty()) Note(dsuStatus)
             }
         })
     }
-    MasterDetail(items, selected, { selected = it }, wide)
+    MasterDetail(items, selected, { selected = it }, wide, listWidth = 240.dp)
+}
+
+/** What the function does and what it works with. */
+@Composable
+private fun FeatureHeader(icon: ImageVector, hue: Hue, text: String, worksWith: List<ImageVector>) {
+    val p = LocalPalette.current
+    Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        IconTile(icon, hue, 40.dp)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(text, color = p.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded, lineHeight = 17.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(str(R.string.motion_works_with), color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded)
+                worksWith.forEach { b ->
+                    Box(Modifier.size(22.dp).clip(CircleShape).background(p.surfaceHigh), contentAlignment = Alignment.Center) {
+                        Icon(b, null, tint = p.muted, modifier = Modifier.size(14.dp))
+                    }
+                }
+            }
+        }
+    }
+    Hairline()
+}
+
+/** Settings of a function that is off: shown faded, and taps do nothing. */
+@Composable
+private fun Gate(on: Boolean, content: @Composable ColumnScope.() -> Unit) {
+    Box {
+        Column(Modifier.alpha(if (on) 1f else 0.38f), verticalArrangement = Arrangement.spacedBy(12.dp), content = content)
+        if (!on) Box(Modifier.matchParentSize().clickable(remember { MutableInteractionSource() }, indication = null) {})
+    }
+}
+
+/** A steering wheel turned by the live tilt output, up to the configured angle. */
+@Composable
+private fun SteeringWheel(value: Float, maxAngle: Float, modifier: Modifier) {
+    val p = LocalPalette.current
+    val angle by animateFloatAsState(value.coerceIn(-1f, 1f) * maxAngle, label = "wheel")
+    Canvas(modifier) {
+        val r = size.minDimension / 2f
+        val ring = r * 0.16f
+        val c = center
+        rotate(angle, c) {
+            drawCircle(Brush.verticalGradient(listOf(Color(0xFF6B6390), Color(0xFF3A3452))), r - ring / 2, c, style = Stroke(ring))
+            // Spokes: left, right and down, like a car wheel.
+            listOf(180f, 0f, 90f).forEach { deg ->
+                val rad = Math.toRadians(deg.toDouble())
+                val end = Offset(c.x + (r - ring) * kotlin.math.cos(rad).toFloat(), c.y + (r - ring) * kotlin.math.sin(rad).toFloat())
+                drawLine(Color(0xFF524A72), c, end, strokeWidth = ring * 0.7f, cap = StrokeCap.Round)
+            }
+            drawCircle(Accent, r * 0.2f, c)
+            // Top mark, to see the turn.
+            drawLine(AccentBright, Offset(c.x, c.y - r + ring * 0.1f), Offset(c.x, c.y - r + ring * 0.9f), strokeWidth = ring * 0.45f, cap = StrokeCap.Round)
+        }
+        drawCircle(p.outline, r, c, style = Stroke(1.dp.toPx()))
+    }
 }
 
 @Composable

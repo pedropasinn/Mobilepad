@@ -36,6 +36,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
@@ -199,7 +201,12 @@ private fun PaneRow(
                 Text(item.summary, color = p.muted, fontSize = 12.sp, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        item.trailing?.invoke()
+        // Without the 48 dp touch padding, a switch does not make the row taller than the others.
+        item.trailing?.let { t ->
+            CompositionLocalProvider(androidx.compose.material3.LocalMinimumInteractiveComponentSize provides 0.dp) {
+                Box(Modifier.scale(0.86f)) { t() }
+            }
+        }
         when {
             item.onOpen != null -> Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = p.faint)
             expandable -> Icon(if (expanded) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown, null, tint = p.faint)

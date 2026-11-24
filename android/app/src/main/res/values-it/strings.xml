@@ -344,4 +344,12 @@
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">Ripristinare tutto?</string>
     <string name="shizuku_sub">Serve solo per la Switch via Bluetooth: la shell conferma l\'abbinamento in tempo e dà al telefono la classe di controller.</string>
+    <string name="motion_steer">Volante</string>
+    <string name="motion_gyro">Sensore</string>
+    <string name="motion_shake">Scuoti</string>
+    <string name="motion_dsu">DSU</string>
+    <string name="motion_works_with">Funziona con</string>
+    <string name="motion_what">Cosa viene inviato</string>
+    <string name="motion_presses">Tasto premuto</string>
+    <string name="motion_dsu_address">Indirizzo per l\'emulatore</string>
 </resources>
