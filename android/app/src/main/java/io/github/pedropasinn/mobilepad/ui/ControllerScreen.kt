@@ -90,7 +90,6 @@ private val DPAD_MASK = Buttons.DPAD_UP or Buttons.DPAD_DOWN or Buttons.DPAD_LEF
 
 /** What the in-game menu offers; null actions hide their tile. */
 private class MenuActions(
-    val onScreenSaver: () -> Unit,
     val onDisconnect: () -> Unit,
     val steering: Boolean,
     val onSteering: (() -> Unit)?,
@@ -107,19 +106,17 @@ private class MenuActions(
 /**
  * The controller as a handheld shell: Xbox-style layout in landscape, Game Boy-style
  * ([PortraitLayout]) when the screen is taller than wide. Every secondary function sits behind the
- * MENU button. [blackout] draws a black layer while controls stay active. [style]: colours and,
+ * MENU button. [style]: colours and,
  * for an imported skin, its button artwork.
  */
 @Composable
 fun ControllerScreen(
     input: GamepadInput,
     status: String,
-    blackout: Boolean,
     radial: RadialView?,
     nintendoLayout: Boolean = false,
     style: SkinStyle = builtInStyle(SkinId.VIOLET, ""),
     statusKind: StatusKind = StatusKind.IDLE,
-    onScreenSaver: () -> Unit,
     onDisconnect: () -> Unit,
     onRadialTap: (Int) -> Unit = {},
     onRadialBack: () -> Unit = {},
@@ -160,7 +157,7 @@ fun ControllerScreen(
         editingLayout, selectedPart.takeIf { editingLayout }, partBounds,
     )
     val actions = MenuActions(
-        onScreenSaver, onDisconnect, steering, onSteering, motionSensor, onMotionSensor,
+        onDisconnect, steering, onSteering, motionSensor, onMotionSensor,
         axisPreset, onAxisPreset, rumble, onRumble, onRecenter, onAmiibo,
     )
     fun button(mask: Int): (Boolean) -> Unit = { down -> input.touch { it.with(mask, down) } }
@@ -171,11 +168,7 @@ fun ControllerScreen(
         Box(
             Modifier
                 .fillMaxSize()
-                // Pure black under the saver layer, the cutout strip included.
-                .background(
-                    if (blackout) Brush.verticalGradient(listOf(Color.Black, Color.Black))
-                    else Brush.verticalGradient(listOf(shell.shellTop, shell.shellBottom)),
-                ),
+                .background(Brush.verticalGradient(listOf(shell.shellTop, shell.shellBottom))),
         ) {
             BoxWithConstraints(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout)) {
                 val menuBlock: @Composable () -> Unit = {
@@ -198,8 +191,6 @@ fun ControllerScreen(
                     onDone = { selectedPart = null; onEditLayoutDone() },
                 )
             }
-            // Drawn last, without pointer input: touches still reach the controls underneath.
-            if (blackout) Box(Modifier.fillMaxSize().background(Color.Black))
             // Above the black layer: the wheel must stay visible in OLED mode.
             radial?.let {
                 Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.78f)))
@@ -472,7 +463,6 @@ private fun ControllerMenu(
         val actions: @Composable (Boolean) -> Unit = { column ->
             val items = buildList {
                 add(Triple(Icons.Rounded.PlayArrow, Hue.GREEN, str(R.string.menu_resume)) to onClose)
-                add(Triple(Icons.Rounded.Bedtime, Hue.BLUE, str(R.string.saver)) to { onClose(); a.onScreenSaver() })
                 onEditMacros?.let { add(Triple(Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros)) to { onClose(); it() }) }
                 onEditLayout?.let { add(Triple(Icons.Rounded.OpenWith, Hue.TEAL, str(R.string.layout_edit)) to { onClose(); it() }) }
                 a.onAmiibo?.let { add(Triple(Icons.Rounded.Nfc, Hue.GOLD, str(R.string.nav_amiibo)) to { onClose(); it() }) }

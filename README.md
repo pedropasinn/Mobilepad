@@ -42,12 +42,6 @@
   so OLED pixels stay off. Layouts adapt to phones, tablets and Android handhelds, in landscape and portrait.
 - **Five languages** – English, Italian, Chinese (simplified and traditional) and Japanese, in the app
   and in the companions; the system language is used, English otherwise.
-- **Screen power saving while you play**
-  - *Black layer (OLED)*: black layer + minimum brightness, touch controls stay active.
-  - *Panel off* (works on LCD too): turns the display panel off through
-    [Shizuku](https://shizuku.rikka.app/) while the physical controller keeps working.
-  - Safety: Volume up, holding Back+Start on the controller or leaving the app turns the screen
-    back on; if the app stops responding a watchdog does it by itself within 2.5 s.
 - **Macros and radial menus**, reWASD style, with a visual editor:
   - trigger combos recorded straight from the controller (e.g. **L3 + R3**);
   - output sequences of controller buttons, **PC keys** (Ctrl, Alt, Win, F1–F24…), stick moves
@@ -165,24 +159,11 @@ While Bluetooth mode is on the app shows a "Gamepad Bluetooth attivo" notificati
 drops Bluetooth gamepads of apps that go to the background. If the phone was paired before with
 another gamepad app, remove it from the PC and pair again: hosts cache the HID descriptor at pairing.
 
-### Panel off on LCD phones
+### Switch over Bluetooth needs Shizuku
 
 Install and start [Shizuku](https://shizuku.rikka.app/) (wireless debugging or ADB), then tap
-*Grant* in *Settings → Screen saver*.
-
-### Emergency: turning the screen back on
-
-From the safest to the last resort:
-
-1. **Press Volume Up.** With the panel off, the privileged service reads the key straight from the
-   kernel input device, so it works even if the app is frozen or Android does not deliver the key.
-2. **Hold Back + Start for 1.5 s** on the physical controller.
-3. **Leave the app** (Home or Recents gesture), or press **Power** twice: standby and wake-up
-   restore the screen normally.
-4. If the app crashes or is killed, the watchdog turns the panel on within **2.5 s**.
-5. From a PC with ADB: `adb shell input keyevent KEYCODE_VOLUME_UP`, or
-   `adb shell am force-stop io.github.pedropasinn.mobilepad` (the watchdog does the rest).
-6. Holding Power for ~10 s restarts the phone, which always restores the display.
+*Grant* in *Settings → Shizuku*: the shell confirms the pairing before the Switch gives up and gives
+the phone the gamepad class of device.
 
 ## Compatibility with Remote Gamepad
 
@@ -224,8 +205,7 @@ tools/            Helper scripts
 
 - [ViGEmBus / ViGEm.Client](https://github.com/nefarius/ViGEmBus) (MIT/BSD‑3) – virtual Xbox controller.
 - [Shizuku](https://github.com/RikkaApps/Shizuku-API) (Apache‑2.0) and
-  [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) (Apache‑2.0) – panel off.
-- The panel-off technique follows [scrcpy](https://github.com/Genymobile/scrcpy) (Apache‑2.0).
+  [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) (Apache‑2.0) – Bluetooth calls for the Switch.
 - [ZXing Android Embedded](https://github.com/journeyapps/zxing-android-embedded) (Apache‑2.0) – QR scanner.
 - [QRCoder](https://github.com/codebude/QRCoder) (MIT) – QR code in the companion.
 - [emuiibo](https://github.com/XorTroll/emuiibo) (used through its IPC service, not bundled) –

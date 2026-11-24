@@ -34,15 +34,10 @@
     <string name="orient_reverse">Paisagem, invertida</string>
     <string name="orient_system">Seguir a rotação do Android</string>
     <string name="orient_portrait">Retrato (Game Boy)</string>
-    <string name="saver">Descanso de tela</string>
-    <string name="saver_sub">MENU ou Volume para baixo para iniciar · Volume para cima para sair</string>
-    <string name="saver_black">Camada preta (OLED)</string>
-    <string name="saver_panel">Painel desligado (LCD também)</string>
     <string name="shizuku_ready">Shizuku pronto</string>
     <string name="shizuku_perm">Shizuku em execução, falta a permissão</string>
-    <string name="shizuku_off">Shizuku não está em execução (necessário para desligar o painel)</string>
+    <string name="shizuku_off">Shizuku não está em execução</string>
     <string name="grant">Permitir</string>
-    <string name="saver_exit">Sair: Volume para cima · Back+Start segurados por 1,5 s no controle · saindo do app. Com o painel desligado, se o app travar a tela volta a ligar sozinha.</string>
     <string name="language">Idioma</string>
     <string name="language_sub">Textos do app; por padrão é usado o idioma do sistema</string>
     <string name="language_system">Padrão do sistema</string>
@@ -348,4 +343,5 @@
     <string name="part_l3">L3</string>
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">Restaurar tudo?</string>
+    <string name="shizuku_sub">Só é necessário para o Switch por Bluetooth: o shell confirma o pareamento a tempo e dá ao celular a classe de controle.</string>
 </resources>

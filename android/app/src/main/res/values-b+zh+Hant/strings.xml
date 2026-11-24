@@ -34,15 +34,10 @@
     <string name="orient_reverse">橫向（反向）</string>
     <string name="orient_system">跟隨 Android 旋轉設定</string>
     <string name="orient_portrait">直向（Game Boy）</string>
-    <string name="saver">螢幕節能</string>
-    <string name="saver_sub">按 MENU 或音量減啟動 · 音量加退出</string>
-    <string name="saver_black">黑色遮罩（OLED）</string>
-    <string name="saver_panel">關閉面板（LCD 也可）</string>
     <string name="shizuku_ready">Shizuku 已就緒</string>
     <string name="shizuku_perm">Shizuku 執行中，需要授權</string>
-    <string name="shizuku_off">Shizuku 未執行（關閉面板時需要）</string>
+    <string name="shizuku_off">Shizuku 未執行</string>
     <string name="grant">授權</string>
-    <string name="saver_exit">退出：音量加 · 在控制器上按住 Back+Start 1.5 秒 · 離開 App。面板關閉時，如果 App 當掉，螢幕會自動重新亮起。</string>
     <string name="language">語言</string>
     <string name="language_sub">App 的文字；預設使用系統語言</string>
     <string name="language_system">跟隨系統</string>
@@ -348,4 +343,5 @@
     <string name="part_l3">L3</string>
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">全部還原？</string>
+    <string name="shizuku_sub">僅在透過藍牙連接 Switch 時需要：及時確認配對，並讓手機顯示為手把。</string>
 </resources>

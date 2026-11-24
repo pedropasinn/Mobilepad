@@ -34,15 +34,10 @@
     <string name="orient_reverse">Orizzontale capovolto</string>
     <string name="orient_system">Segui la rotazione di Android</string>
     <string name="orient_portrait">Verticale (Game Boy)</string>
-    <string name="saver">Risparmio schermo</string>
-    <string name="saver_sub">MENU o Volume giù per attivare · Volume su per uscire</string>
-    <string name="saver_black">Strato nero (OLED)</string>
-    <string name="saver_panel">Spegni pannello (anche LCD)</string>
     <string name="shizuku_ready">Shizuku pronto</string>
     <string name="shizuku_perm">Shizuku attivo, permesso da concedere</string>
-    <string name="shizuku_off">Shizuku non attivo (serve per spegnere il pannello)</string>
+    <string name="shizuku_off">Shizuku non è in esecuzione</string>
     <string name="grant">Concedi</string>
-    <string name="saver_exit">Uscita: Volume su · Back+Start tenuti 1,5 s sul controller · uscita dall\'app. A pannello spento, se l\'app si blocca lo schermo si riaccende da solo.</string>
     <string name="language">Lingua</string>
     <string name="language_sub">Testi dell\'app; di base si usa la lingua di sistema</string>
     <string name="language_system">Predefinita di sistema</string>
@@ -348,4 +343,5 @@
     <string name="part_l3">L3</string>
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">Ripristinare tutto?</string>
+    <string name="shizuku_sub">Serve solo per la Switch via Bluetooth: la shell conferma l\'abbinamento in tempo e dà al telefono la classe di controller.</string>
 </resources>

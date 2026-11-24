@@ -34,15 +34,10 @@
     <string name="orient_reverse">横向き（反転）</string>
     <string name="orient_system">Android の回転設定に従う</string>
     <string name="orient_portrait">縦向き（Game Boy）</string>
-    <string name="saver">画面セーバー</string>
-    <string name="saver_sub">MENU または音量−で開始 · 音量＋で終了</string>
-    <string name="saver_black">黒レイヤー（OLED）</string>
-    <string name="saver_panel">パネルをオフ（LCD も可）</string>
     <string name="shizuku_ready">Shizuku 準備完了</string>
     <string name="shizuku_perm">Shizuku 起動中、権限の許可が必要</string>
-    <string name="shizuku_off">Shizuku 未起動（パネルをオフにするのに必要）</string>
+    <string name="shizuku_off">Shizuku が実行されていません</string>
     <string name="grant">許可する</string>
-    <string name="saver_exit">終了：音量＋ · コントローラーで Back+Start を 1.5 秒長押し · アプリを離れる。パネルオフ中にアプリが止まっても、画面は自動で再点灯します。</string>
     <string name="language">言語</string>
     <string name="language_sub">アプリの表示言語。既定ではシステムの言語を使用</string>
     <string name="language_system">システムの既定</string>
@@ -348,4 +343,5 @@
     <string name="part_l3">L3</string>
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">すべて戻す？</string>
+    <string name="shizuku_sub">Bluetooth で Switch に接続するときだけ必要です。ペアリングを時間内に承認し、端末をゲームパッドとして認識させます。</string>
 </resources>

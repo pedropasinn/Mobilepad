@@ -34,15 +34,10 @@
     <string name="orient_reverse">Landscape, flipped</string>
     <string name="orient_system">Follow Android\'s rotation</string>
     <string name="orient_portrait">Portrait (Game Boy)</string>
-    <string name="saver">Screen saver</string>
-    <string name="saver_sub">MENU or Volume down to start · Volume up to exit</string>
-    <string name="saver_black">Black layer (OLED)</string>
-    <string name="saver_panel">Panel off (LCD too)</string>
     <string name="shizuku_ready">Shizuku ready</string>
     <string name="shizuku_perm">Shizuku running, permission needed</string>
-    <string name="shizuku_off">Shizuku not running (needed to turn the panel off)</string>
+    <string name="shizuku_off">Shizuku is not running</string>
     <string name="grant">Grant</string>
-    <string name="saver_exit">Exit: Volume up · Back+Start held 1.5 s on the controller · leaving the app. With the panel off, if the app freezes the screen turns back on by itself.</string>
     <string name="language">Language</string>
     <string name="language_sub">Texts of the app; the system language is used by default</string>
     <string name="language_system">System default</string>
@@ -348,4 +343,5 @@
     <string name="part_l3">L3</string>
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">Reset all?</string>
+    <string name="shizuku_sub">Needed only for the Switch over Bluetooth: the shell confirms the pairing in time and gives the phone the gamepad class.</string>
 </resources>

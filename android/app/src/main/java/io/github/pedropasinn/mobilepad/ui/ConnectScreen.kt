@@ -46,6 +46,7 @@ import androidx.compose.material.icons.rounded.Computer
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Nfc
@@ -97,7 +98,6 @@ import io.github.pedropasinn.mobilepad.R
 import io.github.pedropasinn.mobilepad.ScreenOrientation
 import io.github.pedropasinn.mobilepad.bt.GenericGamepadProfile
 import io.github.pedropasinn.mobilepad.bt.SwitchProProfile
-import io.github.pedropasinn.mobilepad.screen.SaverMode
 import io.github.pedropasinn.mobilepad.screen.ShizukuScreen
 import io.github.pedropasinn.mobilepad.skin.DeltaSkin
 import io.github.pedropasinn.mobilepad.str
@@ -150,8 +150,6 @@ class SettingsPanel(
     val onTheme: (AppTheme) -> Unit,
     val language: String,
     val onLanguage: (String) -> Unit,
-    val saverMode: SaverMode,
-    val onSaverMode: (SaverMode) -> Unit,
     val shizuku: ShizukuScreen.Availability,
     val onShizukuPermission: () -> Unit,
 )
@@ -638,12 +636,11 @@ private fun SettingsPage(wide: Boolean, s: SettingsPanel) {
                 }
                 Note(str(R.string.language_sub))
             },
-            PaneItem("saver", Icons.Rounded.Bedtime, Hue.BLUE, str(R.string.saver),
-                if (s.saverMode == SaverMode.PANEL_OFF) str(R.string.saver_panel) else str(R.string.saver_black)) {
-                Segmented(
-                    listOf(SaverMode.BLACK to str(R.string.saver_black), SaverMode.PANEL_OFF to str(R.string.saver_panel)),
-                    s.saverMode, s.onSaverMode, Modifier.fillMaxWidth(),
-                )
+            PaneItem("shizuku", Icons.Rounded.AdminPanelSettings, Hue.BLUE, "Shizuku", when (s.shizuku) {
+                ShizukuScreen.Availability.READY -> str(R.string.shizuku_ready)
+                ShizukuScreen.Availability.NO_PERMISSION -> str(R.string.shizuku_perm)
+                ShizukuScreen.Availability.NOT_RUNNING -> str(R.string.shizuku_off)
+            }) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     val (dot, text) = when (s.shizuku) {
                         ShizukuScreen.Availability.READY -> Success to str(R.string.shizuku_ready)
@@ -656,8 +653,7 @@ private fun SettingsPage(wide: Boolean, s: SettingsPanel) {
                         TextButton(onClick = s.onShizukuPermission) { Text(str(R.string.grant)) }
                     }
                 }
-                Note(str(R.string.saver_sub))
-                Note(str(R.string.saver_exit))
+                Note(str(R.string.shizuku_sub))
             },
             PaneItem("about", Icons.Rounded.Info, Hue.SLATE, str(R.string.about), "Mobilepad ${BuildConfig.VERSION_NAME}") {
                 Text(str(R.string.about_sub, BuildConfig.VERSION_NAME), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded)

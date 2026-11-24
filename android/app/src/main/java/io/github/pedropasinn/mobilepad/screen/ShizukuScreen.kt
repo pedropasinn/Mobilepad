@@ -70,16 +70,6 @@ class ShizukuScreen(private val context: Context) {
         return withTimeoutOrNull(BIND_TIMEOUT_MS) { pending.await() }
     }
 
-    /** Returns false if Shizuku is unavailable or the device refused the call. */
-    suspend fun setPanel(on: Boolean): Boolean = withContext(Dispatchers.IO) {
-        try {
-            bound()?.setPanelPower(on) ?: false
-        } catch (e: Exception) {
-            Log.e(TAG, "setPanelPower($on) failed", e)
-            false
-        }
-    }
-
     /** Confirms a pending pairing through the shell's BLUETOOTH_PRIVILEGED permission. */
     suspend fun confirmPairing(address: String): Boolean = withContext(Dispatchers.IO) {
         try {
@@ -100,13 +90,9 @@ class ShizukuScreen(private val context: Context) {
         }
     }
 
-    /** False when the service has turned the panel back on by itself; null if unreachable. */
-    fun heartbeat(): Boolean? = runCatching { service?.heartbeat() }.getOrNull()
-
-    /** Turns the panel back on and stops the privileged process. */
+    /** Stops the privileged process. */
     fun release() {
         val current = service ?: return
-        runCatching { current.setPanelPower(true) }
         runCatching { Shizuku.unbindUserService(args, connection, true) }
         service = null
         pending = CompletableDeferred()

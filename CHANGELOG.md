@@ -10,11 +10,11 @@ Android devices and Nintendo Switch, over Wi‑Fi, USB or Bluetooth.
   and the rounded Nunito font.
 - Controller drawn as a handheld shell with moulded buttons, a one-piece D-pad and recessed sticks;
   skins Violet, Rose and Graphite (pure black, for OLED).
-- One MENU button for every secondary function: screen saver, vibration, tilt steering, motion sensor
+- One MENU button for every secondary function: vibration, tilt steering, motion sensor
   and axes, recenter, amiibo and leave.
 - Delta skins: import `.deltaskin` files in *Settings → Controller skin* (PDF/PNG artwork, D-pads,
   analog thumbsticks, several fingers at once).
-- Macros and radial wheels, motion sensor and DSU server, amiibo through emuiibo, OLED screen saver.
+- Macros and radial wheels, motion sensor and DSU server, amiibo through emuiibo.
 - Languages: English, Português (Brasil), Italiano, 简体中文, 繁體中文, 日本語.
 - Pages: Connect · Controller (skins, button remapping, macros and wheels, orientation) · Motion · Extras
   (amiibo) · Settings. Each page is a list with the selected entry's detail beside it (landscape) or
@@ -31,6 +31,10 @@ Android devices and Nintendo Switch, over Wi‑Fi, USB or Bluetooth.
 - Radial wheels: vector icons instead of emoji (old configurations convert automatically), solid
   colours over any skin, and wheels opened from the touchscreen stay open until a slice is tapped.
 - Macros and wheels page in two columns with wheel miniatures.
+- Button layout editor: on the controller itself, drag any part, change its size and opacity or hide it;
+  landscape and portrait are saved apart. Opened from *Controller → Button layout* or the in-game menu.
+- The screen saver (black layer, panel off through Shizuku, Volume and Back+Start shortcuts) is gone:
+  Shizuku now only serves the Switch over Bluetooth.
 
 ### Windows companion
 - Virtual Xbox 360 controller through ViGEmBus, QR code to connect, USB through ADB; dark painted UI.

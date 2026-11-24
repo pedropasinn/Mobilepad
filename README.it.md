@@ -42,12 +42,6 @@
   OLED restano spenti. I layout si adattano a telefoni, tablet e console Android portatili, in orizzontale e in verticale.
 - **Cinque lingue** – inglese, italiano, cinese (semplificato e tradizionale) e giapponese, nell'app e nei
   companion; si usa la lingua di sistema, altrimenti l'inglese.
-- **Risparmio schermo mentre giochi**
-  - *Strato nero (OLED)*: livello nero + luminosità minima, i comandi touch restano attivi.
-  - *Spegni pannello* (anche su LCD): spegne il pannello tramite [Shizuku](https://shizuku.rikka.app/)
-    mentre il controller fisico continua a funzionare.
-  - Sicurezza: Volume su, Back+Start tenuti sul controller o l'uscita dall'app riaccendono lo schermo;
-    se l'app smette di rispondere lo fa da solo un watchdog entro 2,5 s.
 - **Macro e ruote radiali** in stile reWASD, con editor visuale:
   - combinazioni registrate direttamente dal controller (es. **L3 + R3**);
   - sequenze di pulsanti del controller, **tasti PC** (Ctrl, Alt, Win, F1–F24…), movimenti
@@ -61,7 +55,7 @@
 <p align="center">
   <img src="docs/images/menu.png" width="420" alt="Menu di gioco">
   <img src="docs/images/connect.png" width="420" alt="Schermata di connessione">
-  <img src="docs/images/settings.png" width="420" alt="Impostazioni: tema, orientamento, risparmio schermo">
+  <img src="docs/images/settings.png" width="420" alt="Impostazioni: tema, lingua, Shizuku">
   <img src="docs/images/macros.png" width="420" alt="Macro e ruote radiali">
   <img src="docs/images/motion.png" width="420" alt="Impostazioni di movimento">
 </p>
@@ -164,24 +158,11 @@ annulla i gamepad Bluetooth delle app che vanno in secondo piano. Se il telefono
 con un'altra app gamepad, rimuovilo dal PC e abbinalo di nuovo: il PC memorizza il descrittore HID
 al momento dell'abbinamento.
 
-### Spegnere il pannello sui telefoni LCD
+### La Switch via Bluetooth richiede Shizuku
 
 Installa e avvia [Shizuku](https://shizuku.rikka.app/) (debug wireless o ADB), poi tocca *Concedi*
-in *Impostazioni → Risparmio schermo*.
-
-### Emergenza: riaccendere lo schermo
-
-Dal più comodo all'ultima risorsa:
-
-1. **Premi Volume su.** A pannello spento il servizio privilegiato legge il tasto direttamente dal
-   dispositivo di input del kernel: funziona anche se l'app è bloccata o Android non consegna il tasto.
-2. **Tieni premuti Back + Start per 1,5 s** sul controller fisico.
-3. **Esci dall'app** (gesto Home o app recenti), oppure premi **Power** due volte: standby e
-   risveglio ripristinano lo schermo normalmente.
-4. Se l'app va in crash o viene chiusa, il watchdog riaccende il pannello entro **2,5 s**.
-5. Da un PC con ADB: `adb shell input keyevent KEYCODE_VOLUME_UP`, oppure
-   `adb shell am force-stop io.github.pedropasinn.mobilepad` (al resto pensa il watchdog).
-6. Tenendo premuto Power per ~10 s il telefono si riavvia, e lo schermo torna sempre acceso.
+in *Impostazioni → Shizuku*: la shell conferma l'abbinamento prima che la Switch rinunci e dà al
+telefono la classe di controller.
 
 ## Compatibilità con Remote Gamepad
 
@@ -223,8 +204,7 @@ tools/            Script di supporto
 
 - [ViGEmBus / ViGEm.Client](https://github.com/nefarius/ViGEmBus) (MIT/BSD‑3) – controller Xbox virtuale.
 - [Shizuku](https://github.com/RikkaApps/Shizuku-API) (Apache‑2.0) e
-  [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) (Apache‑2.0) – spegnimento pannello.
-- La tecnica di spegnimento del pannello segue [scrcpy](https://github.com/Genymobile/scrcpy) (Apache‑2.0).
+  [HiddenApiBypass](https://github.com/LSPosed/AndroidHiddenApiBypass) (Apache‑2.0) – chiamate Bluetooth per la Switch.
 - [ZXing Android Embedded](https://github.com/journeyapps/zxing-android-embedded) (Apache‑2.0) – lettore QR.
 - [QRCoder](https://github.com/codebude/QRCoder) (MIT) – codice QR del companion.
 - [emuiibo](https://github.com/XorTroll/emuiibo) (usato tramite il suo servizio IPC, non incluso) –

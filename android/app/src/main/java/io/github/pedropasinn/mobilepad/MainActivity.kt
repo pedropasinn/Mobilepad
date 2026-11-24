@@ -58,8 +58,6 @@ import io.github.pedropasinn.mobilepad.net.WifiConnection
 import io.github.pedropasinn.mobilepad.protocol.Buttons
 import io.github.pedropasinn.mobilepad.protocol.Feedback
 import io.github.pedropasinn.mobilepad.protocol.Wire
-import io.github.pedropasinn.mobilepad.screen.SaverState
-import io.github.pedropasinn.mobilepad.screen.ScreenSaver
 import io.github.pedropasinn.mobilepad.screen.ShizukuScreen
 import io.github.pedropasinn.mobilepad.ui.BluetoothPanel
 import io.github.pedropasinn.mobilepad.ui.HomeScreen
@@ -75,7 +73,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var prefs: Prefs
     private lateinit var connection: WifiConnection
     private lateinit var shizuku: ShizukuScreen
-    private lateinit var saver: ScreenSaver
     private lateinit var bluetooth: BluetoothGamepad
     private lateinit var macros: MacroEngine
     private lateinit var motion: MotionController
@@ -103,7 +100,6 @@ class MainActivity : ComponentActivity() {
     private var foundHosts by mutableStateOf(emptyList<io.github.pedropasinn.mobilepad.net.FoundHost>())
     private var searching by mutableStateOf(false)
     private var macroConfig by mutableStateOf(MacroConfig.EMPTY)
-    private var saverMode by mutableStateOf(io.github.pedropasinn.mobilepad.screen.SaverMode.BLACK)
     private var shizukuState by mutableStateOf(ShizukuScreen.Availability.NOT_RUNNING)
     private var playerLed by mutableStateOf(0)
     private var switchPlayer by mutableStateOf(0)
@@ -200,8 +196,6 @@ class MainActivity : ComponentActivity() {
         prefs = Prefs(this)
         connection = WifiConnection(prefs.deviceId)
         shizuku = ShizukuScreen(this)
-        saver = ScreenSaver(this, lifecycleScope, shizuku, ::toast)
-        saverMode = prefs.saverMode
         bluetooth = (application as MobilepadApp).bluetooth
         useBluetoothProfile(prefs.bluetoothProfile)
         macros = MacroEngine(lifecycleScope)
@@ -289,7 +283,6 @@ class MainActivity : ComponentActivity() {
                 if (status is ConnectionStatus.Failed) toast(str(R.string.connection_lost, status.reason))
             }
         }
-        watchWakeCombo()
         ContextCompat.registerReceiver(
             this,
             pairingReceiver,
@@ -314,7 +307,6 @@ class MainActivity : ComponentActivity() {
     private fun Screens() {
         run {
             val status by connection.status.collectAsState()
-            val saverState by saver.state.collectAsState()
             val btState by bluetooth.state.collectAsState()
             val statusText = (btState as? BluetoothGamepad.State.Connected)?.let {
                 if (bluetoothProfileId == SwitchProProfile.ID) {
@@ -367,16 +359,13 @@ class MainActivity : ComponentActivity() {
                 ControllerScreen(
                     input = input,
                     status = statusText,
-                    blackout = saverState != SaverState.OFF,
                     radial = radial,
                     style = padStyle,
                     statusKind = statusKind,
                     nintendoLayout = (bluetoothProfileId == SwitchProProfile.ID &&
                         btState is BluetoothGamepad.State.Connected) ||
                         (status as? ConnectionStatus.Connected)?.pcOs?.startsWith("Switch") == true,
-                    onScreenSaver = { saver.enter(saverMode) },
                     onDisconnect = {
-                        saver.exit()
                         connection.disconnect()
                         bluetooth.disconnectHost()
                         input.resetTouch()
@@ -483,8 +472,6 @@ class MainActivity : ComponentActivity() {
                             (application as MobilepadApp).applyLanguage(it)
                             language = it
                         },
-                        saverMode = saverMode,
-                        onSaverMode = { saverMode = it; prefs.saverMode = it },
                         shizuku = shizukuState,
                         onShizukuPermission = { shizuku.requestPermission { refreshShizuku() } },
                     ),
@@ -513,8 +500,6 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
-        // Safety: never leave the screen dark when the app is not in front.
-        saver.exit()
         input.resetTouch()
         motion.pause()
         super.onPause()
@@ -544,43 +529,12 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (showPad && handleVolume(event)) return true
         if (physical.onKey(event)) return true
         return super.dispatchKeyEvent(event)
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean =
         physical.onMotion(event) || super.dispatchGenericMotionEvent(event)
-
-    /** Volume down: enter the screen saver. Volume up: leave it. */
-    private fun handleVolume(event: KeyEvent): Boolean {
-        val key = event.keyCode
-        if (key != KeyEvent.KEYCODE_VOLUME_DOWN && key != KeyEvent.KEYCODE_VOLUME_UP) return false
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-            if (key == KeyEvent.KEYCODE_VOLUME_DOWN) saver.enter(saverMode) else saver.exit()
-        }
-        return true
-    }
-
-    /** Holding Back+Start on the physical controller for 1.5 s toggles the screen saver. */
-    private fun watchWakeCombo() {
-        var timer: Job? = null
-        val combo = Buttons.BACK or Buttons.START
-        lifecycleScope.launch {
-            input.physicalState.collect { state ->
-                val held = state.buttons and combo == combo
-                if (held && timer == null) {
-                    timer = launch {
-                        delay(1500)
-                        saver.toggle(saverMode)
-                    }
-                } else if (!held) {
-                    timer?.cancel()
-                    timer = null
-                }
-            }
-        }
-    }
 
     private fun applyMacros(config: MacroConfig, save: Boolean) {
         macroConfig = config

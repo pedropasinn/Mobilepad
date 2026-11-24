@@ -1,7 +1,6 @@
 package io.github.pedropasinn.mobilepad
 
 import android.content.Context
-import io.github.pedropasinn.mobilepad.screen.SaverMode
 import java.security.SecureRandom
 
 class Prefs(context: Context) {
@@ -19,11 +18,6 @@ class Prefs(context: Context) {
     var lastTarget: String
         get() = prefs.getString(KEY_LAST_TARGET, "") ?: ""
         set(value) = prefs.edit().putString(KEY_LAST_TARGET, value).apply()
-
-    var saverMode: SaverMode
-        get() = runCatching { SaverMode.valueOf(prefs.getString(KEY_SAVER_MODE, null) ?: "") }
-            .getOrDefault(SaverMode.BLACK)
-        set(value) = prefs.edit().putString(KEY_SAVER_MODE, value.name).apply()
 
     var macroJson: String
         get() = prefs.getString(KEY_MACROS, null) ?: io.github.pedropasinn.mobilepad.macro.MacroConfig.EXAMPLE
@@ -120,7 +114,6 @@ class Prefs(context: Context) {
         const val KEY_MACROS = "macros_v2"
         const val KEY_DEVICE_ID = "device_id"
         const val KEY_LAST_TARGET = "last_target"
-        const val KEY_SAVER_MODE = "saver_mode"
     }
 }
 

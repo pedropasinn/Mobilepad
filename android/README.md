@@ -18,7 +18,7 @@ Kotlin + Jetpack Compose, minSdk 28, targetSdk 36. User documentation is in the
 | `bt` | Bluetooth HID gamepad + keyboard, descriptor, keep-alive foreground service |
 | `input` | Touch + physical controller merging |
 | `macro` | Macro/radial configuration (JSON), engine, key names |
-| `screen` | OLED black mode, panel off via Shizuku (`DisplayPower`, `ScreenControlService` with watchdog) |
+| `screen` | Shizuku service for the privileged Bluetooth calls of the Switch mode (`ScreenControlService`, `PrivilegedBluetooth`) |
 | `ui` | Compose screens: connection, controller, radial overlay, editors |
 
 ## Macro configuration

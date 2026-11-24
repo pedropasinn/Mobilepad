@@ -34,15 +34,10 @@
     <string name="orient_reverse">横屏（反向）</string>
     <string name="orient_system">跟随 Android 旋转设置</string>
     <string name="orient_portrait">竖屏（Game Boy）</string>
-    <string name="saver">屏幕节能</string>
-    <string name="saver_sub">按 MENU 或音量减启动 · 音量加退出</string>
-    <string name="saver_black">黑色遮罩（OLED）</string>
-    <string name="saver_panel">关闭面板（LCD 也可）</string>
     <string name="shizuku_ready">Shizuku 已就绪</string>
     <string name="shizuku_perm">Shizuku 运行中，需要授权</string>
-    <string name="shizuku_off">Shizuku 未运行（关闭面板时需要）</string>
+    <string name="shizuku_off">Shizuku 未运行</string>
     <string name="grant">授权</string>
-    <string name="saver_exit">退出：音量加 · 在控制器上按住 Back+Start 1.5 秒 · 离开应用。面板关闭时，如果应用卡住，屏幕会自动重新点亮。</string>
     <string name="language">语言</string>
     <string name="language_sub">应用的文字；默认使用系统语言</string>
     <string name="language_system">跟随系统</string>
@@ -348,4 +343,5 @@
     <string name="part_l3">L3</string>
     <string name="part_r3">R3</string>
     <string name="layout_reset_confirm">全部还原？</string>
+    <string name="shizuku_sub">仅在通过蓝牙连接 Switch 时需要：及时确认配对，并让手机显示为手柄。</string>
 </resources>
