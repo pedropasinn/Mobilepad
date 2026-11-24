@@ -156,6 +156,8 @@ class MainActivity : ComponentActivity() {
      */
     private val pairingReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            // Any pairing change: the list of hosts on the Bluetooth page is read again.
+            if (intent.action == BluetoothDevice.ACTION_BOND_STATE_CHANGED) btNameTick++
             if (bluetoothProfileId != SwitchProProfile.ID) return
             val device = IntentCompat.getParcelableExtra(intent, BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
                 ?: return
@@ -549,6 +551,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        btNameTick++ // pairings may have changed in the system settings
         refreshShizuku()
         hideSystemBars()
         motion.resume()
