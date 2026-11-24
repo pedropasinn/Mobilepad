@@ -352,4 +352,5 @@
     <string name="motion_what">发送内容</string>
     <string name="motion_presses">按下的按键</string>
     <string name="motion_dsu_address">模拟器地址</string>
+    <string name="open_controller">打开手柄</string>
 </resources>

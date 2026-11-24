@@ -352,4 +352,5 @@
     <string name="motion_what">送信内容</string>
     <string name="motion_presses">押すボタン</string>
     <string name="motion_dsu_address">エミュレーター用アドレス</string>
+    <string name="open_controller">コントローラーを開く</string>
 </resources>

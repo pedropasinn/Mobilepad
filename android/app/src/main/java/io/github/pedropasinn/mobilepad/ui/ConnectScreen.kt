@@ -80,6 +80,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.rounded.Gamepad
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.VideogameAsset
@@ -120,7 +122,7 @@ enum class StatusKind { IDLE, BUSY, CONNECTED, ERROR }
 /** Pages of the home screen; the controller and the macro editor open as their own screens. */
 private enum class Section(val icon: ImageVector, val hue: Hue, val label: Int) {
     CONNECT(Icons.Rounded.Link, Hue.VIOLET, R.string.nav_connect),
-    CONTROLLER(Icons.Rounded.SportsEsports, Hue.ROSE, R.string.nav_controller_setup),
+    CONTROLLER(Icons.Rounded.Gamepad, Hue.ROSE, R.string.nav_controller_setup),
     MOTION(Icons.Rounded.Explore, Hue.TEAL, R.string.nav_motion),
     EXTRAS(Icons.Rounded.Extension, Hue.GOLD, R.string.nav_extras),
     SETTINGS(Icons.Rounded.Settings, Hue.BLUE, R.string.nav_settings_short),
@@ -222,7 +224,13 @@ fun HomeScreen(
         ) {
             TopBar(status, statusKind, link, wide, onPlay)
             page(Modifier.weight(1f).fillMaxWidth())
-            BottomDock(sections, section, wide) { onSection(it.ordinal) }
+            BottomDock(sections, section, wide, onPlay) { onSection(it.ordinal) }
+        }
+        // Portrait: the dock takes the width, so the button floats just above its right end.
+        if (!wide) {
+            Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.displayCutout).padding(end = 16.dp, bottom = 86.dp), contentAlignment = Alignment.BottomEnd) {
+                ControllerButton(onPlay)
+            }
         }
         controller.preview?.let { SkinPreviewDialog(it, controller.onPreviewDone) }
     }
@@ -248,7 +256,7 @@ private fun TopBar(status: String, statusKind: StatusKind, link: Link, wide: Boo
 
 /**
  * One pill: an icon for the connection (coloured by its state), the time and the battery. Text
- * only while connecting or after an error; connected, a tap goes back to the controller.
+ * only while connecting or after an error.
  */
 @Composable
 private fun StatusCluster(status: String, kind: StatusKind, link: Link, onPlay: () -> Unit) {
@@ -277,7 +285,6 @@ private fun StatusCluster(status: String, kind: StatusKind, link: Link, onPlay: 
     Row(
         Modifier
             .glass(PillShape)
-            .then(if (connected) Modifier.clip(PillShape).clickable(onClick = onPlay) else Modifier)
             .padding(start = 6.dp, end = 14.dp, top = 5.dp, bottom = 5.dp)
             .semantics(mergeDescendants = true) { contentDescription = status },
         verticalAlignment = Alignment.CenterVertically,
@@ -291,7 +298,6 @@ private fun StatusCluster(status: String, kind: StatusKind, link: Link, onPlay: 
             Text(status, color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
         }
-        if (connected) Icon(Icons.Rounded.SportsEsports, null, tint = p.text, modifier = Modifier.size(18.dp).offset(x = (-4).dp))
         Box(Modifier.width(1.dp).height(14.dp).background(p.outline))
         Text(time, color = p.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded)
         if (battery >= 0) {
@@ -309,9 +315,25 @@ private fun StatusCluster(status: String, kind: StatusKind, link: Link, onPlay: 
     }
 }
 
+/** Opens the controller: a round button with just the controller icon. */
+@Composable
+private fun ControllerButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(54.dp)
+            .shadow(10.dp, CircleShape, ambientColor = Accent, spotColor = Accent)
+            .clip(CircleShape)
+            .background(Brush.linearGradient(listOf(Color(0xFFA77BFF), Color(0xFF6A2BE8))))
+            .border(1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.4f), Color.Transparent)), CircleShape)
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = str(R.string.open_controller) },
+        contentAlignment = Alignment.Center,
+    ) { Icon(Icons.Rounded.SportsEsports, null, tint = Color.White, modifier = Modifier.size(28.dp)) }
+}
+
 /** Dock at the bottom, centred: icons, with the name of the page in view beside its icon. */
 @Composable
-private fun BottomDock(sections: List<Section>, current: Section, wide: Boolean, onSection: (Section) -> Unit) {
+private fun BottomDock(sections: List<Section>, current: Section, wide: Boolean, onPlay: () -> Unit, onSection: (Section) -> Unit) {
     Box(Modifier.fillMaxWidth().padding(bottom = if (wide) 0.dp else 10.dp), contentAlignment = Alignment.Center) {
         Row(
             Modifier.glass(RoundedCornerShape(26.dp)).padding(horizontal = 4.dp, vertical = 4.dp),
@@ -319,6 +341,8 @@ private fun BottomDock(sections: List<Section>, current: Section, wide: Boolean,
         ) {
             sections.forEach { s -> NavItem(s, current == s, Modifier, compact = true, roomy = wide) { onSection(s) } }
         }
+        // Landscape: in the bottom right corner, on the dock's line.
+        if (wide) ControllerButton(onPlay, Modifier.align(Alignment.CenterEnd))
     }
 }
 

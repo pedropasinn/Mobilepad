@@ -352,4 +352,5 @@
     <string name="motion_what">Cosa viene inviato</string>
     <string name="motion_presses">Tasto premuto</string>
     <string name="motion_dsu_address">Indirizzo per l\'emulatore</string>
+    <string name="open_controller">Apri il controller</string>
 </resources>
