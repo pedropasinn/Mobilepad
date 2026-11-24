@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.group
 import androidx.compose.ui.unit.dp
 
 /**
@@ -31,12 +32,22 @@ object RaceIcons {
         )
     }
 
+    // Drift (drawn by the user with ChatGPT): kart seen from above, turned 36°, two skid swooshes behind.
     val drift: ImageVector by lazy {
-        icon(
-            "race_drift",
-        "M6 7.1l1.4-1.3q.8-.6 1.5.1l.6.6L13 5.4l.1-.9q.1-1 1.1-.9l1.9.2q1 .1.9 1.1v.6q1.2.4 2.1 1.2l.8-.3q.9-.3 1.3.6l.6 1.4q.4.9-.5 1.3l-.7.3q0 1.3-1 2.3l.4.8q.5.9-.4 1.3l-1.6.9q-.9.5-1.4-.4l-.5-.8-3.6.9-.2.9q-.2 1-1.2.8l-1.8-.4q-1-.2-.8-1.2l.1-.7q-1.3-.7-1.9-2-.5-1.2.2-2.8L6 8.6q-.7-.8 0-1.5zm4.2 2.1q-1.2.7-.8 1.9.4 1.2 1.8 1l2.2-.6q1.5-.4 1.2-1.9-.3-1.4-1.8-1.1z" to true,
-        "M2.3 14q-1-.2-.8-1.2.2-1 1.2-.8 1.2.2 2.3 1.1.8.7.2 1.4-.6.7-1.4.1-.7-.5-1.5-.6zM3.4 18.8q-1-.1-.9-1.1.1-1 1.1-.9 2.3.2 3.8 2.1.6.8-.1 1.4-.8.6-1.4-.2-1-1.1-2.5-1.3zM11.3 19.9q-.8-.6-.3-1.4.5-.8 1.4-.3 1.2.7 1.8 1.8.5.9-.4 1.4-.9.5-1.4-.4-.4-.6-1.1-1.1z" to false,
-        )
+        ImageVector.Builder("race_drift", 24.dp, 24.dp, 64f, 64f).apply {
+            addPath(PathParser().parsePathString("M22 31C8 35 3 44 8 51c4 6 14 9 25 9C17 56 10 49 14 42c2-4 5-7 8-11Z").toNodes(), fill = SolidColor(Color.Black))
+            addPath(PathParser().parsePathString("M29 39C19 43 17 49 23 54c3 3 8 5 14 5-10-5-12-10-8-15l4-5Z").toNodes(), fill = SolidColor(Color.Black))
+            group(rotate = 36f, translationX = 39f, translationY = 27f) {
+                addPath(PathParser().parsePathString("M-12.2 -16H-10.8Q-8 -16 -8 -13.2V-6.8Q-8 -4 -10.8 -4H-12.2Q-15 -4 -15 -6.8V-13.2Q-15 -16 -12.2 -16Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M10.8 -16H12.2Q15 -16 15 -13.2V-6.8Q15 -4 12.2 -4H10.8Q8 -4 8 -6.8V-13.2Q8 -16 10.8 -16Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M-14 7H-12Q-9 7 -9 10V17Q-9 20 -12 20H-14Q-17 20 -17 17V10Q-17 7 -14 7Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M12 7H14Q17 7 17 10V17Q17 20 14 20H12Q9 20 9 17V10Q9 7 12 7Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M-5-20Q0-24 5-20L8-12 7-4 10 5 8 17Q0 21-8 17L-10 5-7-4-8-12ZM0-10a4.8 4.8 0 1 0 0 9.6A4.8 4.8 0 0 0 0-10ZM-5 2Q0-1 5 2L6 8Q0 5-6 8Z").toNodes(), pathFillType = PathFillType.EvenOdd, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M-11 -23H11Q13 -23 13 -21V-21Q13 -19 11 -19H-11Q-13 -19 -13 -21V-21Q-13 -23 -11 -23Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M-10 20H10Q12 20 12 22V22Q12 24 10 24H-10Q-12 24 -12 22V22Q-12 20 -10 20Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+                addPath(PathParser().parsePathString("M-3.2-5.2a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0-6.4 0Z").toNodes(), pathFillType = PathFillType.NonZero, fill = SolidColor(Color.Black))
+            }
+        }.build()
     }
 
     val wheelie: ImageVector by lazy {
