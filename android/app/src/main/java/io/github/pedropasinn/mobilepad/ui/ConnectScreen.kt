@@ -58,6 +58,7 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.OpenWith
 import androidx.compose.material.icons.rounded.Usb
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Button
@@ -135,6 +136,12 @@ class ControllerPanel(
     val onOrientation: (ScreenOrientation) -> Unit,
     val remap: Map<Int, Int> = emptyMap(),
     val onRemap: (Map<Int, Int>) -> Unit = {},
+    /** Style in use and the landscape layout, for the miniature of the layout entry. */
+    val style: SkinStyle? = null,
+    val layout: PadLayout = PadLayout(),
+    val layoutChanges: Int = 0,
+    val onEditLayout: () -> Unit = {},
+    val onResetLayout: () -> Unit = {},
 )
 
 /** State and actions of the Settings page. */
@@ -449,9 +456,9 @@ private fun ControllerPage(wide: Boolean, c: ControllerPanel) {
     MasterDetail(
         items = listOf(
             PaneItem("skin", Icons.Rounded.Style, Hue.VIOLET, str(R.string.skin), c.currentName) { SkinGallery(c, large = !wide) },
-            PaneItem("remap", Icons.Rounded.SwapHoriz, Hue.ORANGE, str(R.string.remap),
-                if (c.remap.isEmpty()) str(R.string.remap_none) else str(R.string.remap_count, c.remap.size)) {
-                RemapEditor(c.remap, c.onRemap)
+            PaneItem("layout", Icons.Rounded.OpenWith, Hue.ORANGE, str(R.string.layout_title),
+                if (c.layoutChanges == 0) str(R.string.remap_none) else str(R.string.layout_count, c.layoutChanges)) {
+                LayoutPane(c)
             },
             PaneItem("macros", Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros), c.macroSummary, onOpen = c.onMacros),
             PaneItem("orientation", Icons.Rounded.ScreenRotation, Hue.GREEN, str(R.string.controller_orientation), orientationName(c.orientation)) {
@@ -474,6 +481,25 @@ private fun orientationName(o: ScreenOrientation) = when (o) {
     ScreenOrientation.REVERSE -> str(R.string.orient_reverse)
     ScreenOrientation.SYSTEM -> str(R.string.orient_system)
     ScreenOrientation.PORTRAIT -> str(R.string.orient_portrait)
+}
+
+/**
+ * Where each part sits, its size and opacity: edited on the controller itself. Below, the rarely
+ * needed swap of what the buttons send.
+ */
+@Composable
+private fun LayoutPane(c: ControllerPanel) {
+    c.style?.let { ControllerPreview(it, Modifier.fillMaxWidth().widthIn(max = 520.dp), layout = c.layout, onClick = c.onEditLayout) }
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = c.onEditLayout) {
+            Icon(Icons.Rounded.OpenWith, null)
+            Text(" " + str(R.string.layout_edit))
+        }
+        if (c.layoutChanges > 0) TextButton(onClick = c.onResetLayout) { Text(str(R.string.layout_reset_all)) }
+    }
+    Note(str(R.string.layout_note))
+    SectionLabel(str(R.string.remap_functions))
+    RemapEditor(c.remap, c.onRemap)
 }
 
 /** The skin in use in large, then every skin as a miniature of the real controller. */

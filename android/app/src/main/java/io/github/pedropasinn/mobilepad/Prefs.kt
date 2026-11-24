@@ -84,6 +84,14 @@ class Prefs(context: Context) {
         }.toMap()
         set(value) = prefs.edit().putString(KEY_REMAP, value.entries.joinToString(",") { "${it.key}:${it.value}" }).apply()
 
+    /** Controller layout for landscape and for portrait (see PadLayout.encode). */
+    var layoutLandscape: io.github.pedropasinn.mobilepad.ui.PadLayout
+        get() = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(prefs.getString(KEY_LAYOUT_LAND, null))
+        set(value) = prefs.edit().putString(KEY_LAYOUT_LAND, value.encode()).apply()
+    var layoutPortrait: io.github.pedropasinn.mobilepad.ui.PadLayout
+        get() = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(prefs.getString(KEY_LAYOUT_PORT, null))
+        set(value) = prefs.edit().putString(KEY_LAYOUT_PORT, value.encode()).apply()
+
     /** App language: "" follows the system, otherwise a tag from MobilepadApp.LANGUAGES. */
     var language: String
         get() = prefs.getString(KEY_LANGUAGE, null) ?: ""
@@ -99,6 +107,8 @@ class Prefs(context: Context) {
         const val KEY_THEME = "theme"
         const val KEY_SKIN = "skin"
         const val KEY_REMAP = "remap"
+        const val KEY_LAYOUT_LAND = "layout_land"
+        const val KEY_LAYOUT_PORT = "layout_port"
         const val KEY_DELTA_SKIN = "delta_skin"
         const val KEY_LANGUAGE = "language"
         const val KEY_MOTION_HINT = "motion_hint"

@@ -90,6 +90,11 @@ class MainActivity : ComponentActivity() {
     private var deltaSkinId by mutableStateOf("")
     private var previewSkinId by mutableStateOf<String?>(null)
     private var remap by mutableStateOf<Map<Int, Int>>(emptyMap())
+    private var layoutLand by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
+    private var layoutPort by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
+    private var editLayout by mutableStateOf(false)
+    /** The editor was opened from the Controller page: Done goes back there. */
+    private var editFromHome = false
     private val skinLibrary by lazy { io.github.pedropasinn.mobilepad.skin.DeltaSkinLibrary(filesDir) }
     private var language by mutableStateOf("")
     private var homeSection by mutableStateOf(0)
@@ -236,6 +241,8 @@ class MainActivity : ComponentActivity() {
         skin = prefs.skin
         deltaSkinId = prefs.deltaSkin
         remap = prefs.remap
+        layoutLand = prefs.layoutLandscape
+        layoutPort = prefs.layoutPortrait
         input.remap = remap
         lifecycleScope.launch { skinLibrary.load() }
         language = prefs.language
@@ -406,6 +413,17 @@ class MainActivity : ComponentActivity() {
                     macroConfig = macroConfig,
                     onEditMacros = { showMacros = true },
                     onOpenWheel = { id -> macros.openRadial(id) },
+                    landscapeLayout = layoutLand,
+                    portraitLayout = layoutPort,
+                    onLayout = { portrait, l ->
+                        if (portrait) { layoutPort = l; prefs.layoutPortrait = l } else { layoutLand = l; prefs.layoutLandscape = l }
+                    },
+                    editingLayout = editLayout,
+                    onEditLayout = { editLayout = true },
+                    onEditLayoutDone = {
+                        editLayout = false
+                        if (editFromHome) { editFromHome = false; showPad = false }
+                    },
                 )
             } else {
                 HomeScreen(
@@ -447,6 +465,14 @@ class MainActivity : ComponentActivity() {
                         onOrientation = { orientation = it; prefs.orientation = it },
                         remap = remap,
                         onRemap = { remap = it; prefs.remap = it; input.remap = it },
+                        style = padStyle,
+                        layout = layoutLand,
+                        layoutChanges = layoutLand.tweaks.size + layoutPort.tweaks.size,
+                        onEditLayout = { editLayout = true; editFromHome = true; showPad = true },
+                        onResetLayout = {
+                            layoutLand = io.github.pedropasinn.mobilepad.ui.PadLayout(); prefs.layoutLandscape = layoutLand
+                            layoutPort = io.github.pedropasinn.mobilepad.ui.PadLayout(); prefs.layoutPortrait = layoutPort
+                        },
                     ),
                     settings = io.github.pedropasinn.mobilepad.ui.SettingsPanel(
                         theme = theme,

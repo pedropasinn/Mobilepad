@@ -50,6 +50,7 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.CenterFocusStrong
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Nfc
+import androidx.compose.material.icons.rounded.OpenWith
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.ScreenRotation
 import androidx.compose.material.icons.rounded.Sensors
@@ -140,9 +141,24 @@ fun ControllerScreen(
     macroConfig: MacroConfig? = null,
     onEditMacros: (() -> Unit)? = null,
     onOpenWheel: ((String) -> Unit)? = null,
+    /** User layouts for each orientation, and the layout editor shown over the controller. */
+    landscapeLayout: PadLayout = PadLayout(),
+    portraitLayout: PadLayout = PadLayout(),
+    onLayout: (portrait: Boolean, PadLayout) -> Unit = { _, _ -> },
+    editingLayout: Boolean = false,
+    onEditLayout: (() -> Unit)? = null,
+    onEditLayoutDone: () -> Unit = {},
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     BackHandler(enabled = menuOpen) { menuOpen = false }
+    BackHandler(enabled = editingLayout && !menuOpen) { onEditLayoutDone() }
+    var selectedPart by remember { mutableStateOf<String?>(null) }
+    val partBounds = remember { androidx.compose.runtime.mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>() }
+    var portraitNow by remember { mutableStateOf(false) }
+    val layoutScope = PadLayoutScope(
+        if (portraitNow) portraitLayout else landscapeLayout,
+        editingLayout, selectedPart.takeIf { editingLayout }, partBounds,
+    )
     val actions = MenuActions(
         onScreenSaver, onDisconnect, steering, onSteering, motionSensor, onMotionSensor,
         axisPreset, onAxisPreset, rumble, onRumble, onRecenter, onAmiibo,
@@ -151,7 +167,7 @@ fun ControllerScreen(
     val labels = if (nintendoLayout) NINTENDO else XBOX
     val shell = style.colors
 
-    CompositionLocalProvider(LocalSkin provides shell, LocalSkinParts provides style.parts) {
+    CompositionLocalProvider(LocalSkin provides shell, LocalSkinParts provides style.parts, LocalPadLayout provides layoutScope) {
         Box(
             Modifier
                 .fillMaxSize()
@@ -165,13 +181,23 @@ fun ControllerScreen(
                 val menuBlock: @Composable () -> Unit = {
                     MenuBlock(status, statusKind, recenter = steering || motionSensor, onMenu = { menuOpen = true }, onRecenter = onRecenter)
                 }
-                if (maxHeight > maxWidth) {
+                val portrait = maxHeight > maxWidth
+                if (portrait != portraitNow) { portraitNow = portrait; partBounds.clear(); selectedPart = null }
+                if (portrait) {
                     PortraitLayout(input, labels, maxWidth, menuBlock, ::button)
                 } else {
                     LandscapeLayout(input, labels, maxHeight, menuBlock, ::button)
                 }
             }
 
+            if (editingLayout) {
+                PadLayoutEditor(
+                    layoutScope,
+                    onSelect = { selectedPart = it },
+                    onChange = { onLayout(portraitNow, it) },
+                    onDone = { selectedPart = null; onEditLayoutDone() },
+                )
+            }
             // Drawn last, without pointer input: touches still reach the controls underneath.
             if (blackout) Box(Modifier.fillMaxSize().background(Color.Black))
             // Above the black layer: the wheel must stay visible in OLED mode.
@@ -180,7 +206,7 @@ fun ControllerScreen(
                 RadialMenuOverlay(it, nintendoLayout = nintendoLayout, onTap = onRadialTap, onBack = onRadialBack)
             }
             AnimatedVisibility(menuOpen, enter = fadeIn(), exit = fadeOut()) {
-                ControllerMenu(status, statusKind, actions, macroConfig, onEditMacros, onOpenWheel, onClose = { menuOpen = false })
+                ControllerMenu(status, statusKind, actions, macroConfig, onEditMacros, onOpenWheel, onEditLayout, onClose = { menuOpen = false })
             }
         }
     }
@@ -190,7 +216,7 @@ fun ControllerScreen(
 @Composable
 private fun MenuBlock(status: String, statusKind: StatusKind, recenter: Boolean, onMenu: () -> Unit, onRecenter: () -> Unit) {
     val shell = LocalSkin.current
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(Modifier.tweak(PadPart.MENU), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 PadButton("", { if (it) onMenu() }, Modifier.width(54.dp).height(24.dp), PillShape, part = Part.MENU)
@@ -228,13 +254,13 @@ private fun BoxScope.LandscapeLayout(
     // Shoulders and triggers
     Row(Modifier.align(Alignment.TopStart).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         PadButton(labels.lt, { d -> input.touch { it.copy(leftTrigger = if (d) 255 else 0) } },
-            Modifier.width(96.dp).height(50.dp), TriggerShape, fontSize = 15, part = Part.LT)
-        PadButton(labels.lb, button(Buttons.LEFT_SHOULDER), Modifier.width(96.dp).height(50.dp), PillShape, fontSize = 15, part = Buttons.LEFT_SHOULDER)
+            Modifier.tweak(PadPart.LT).width(96.dp).height(50.dp), TriggerShape, fontSize = 15, part = Part.LT)
+        PadButton(labels.lb, button(Buttons.LEFT_SHOULDER), Modifier.tweak(PadPart.LB).width(96.dp).height(50.dp), PillShape, fontSize = 15, part = Buttons.LEFT_SHOULDER)
     }
     Row(Modifier.align(Alignment.TopEnd).padding(12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        PadButton(labels.rb, button(Buttons.RIGHT_SHOULDER), Modifier.width(96.dp).height(50.dp), PillShape, fontSize = 15, part = Buttons.RIGHT_SHOULDER)
+        PadButton(labels.rb, button(Buttons.RIGHT_SHOULDER), Modifier.tweak(PadPart.RB).width(96.dp).height(50.dp), PillShape, fontSize = 15, part = Buttons.RIGHT_SHOULDER)
         PadButton(labels.rt, { d -> input.touch { it.copy(rightTrigger = if (d) 255 else 0) } },
-            Modifier.width(96.dp).height(50.dp), TriggerShape, fontSize = 15, part = Part.RT)
+            Modifier.tweak(PadPart.RT).width(96.dp).height(50.dp), TriggerShape, fontSize = 15, part = Part.RT)
     }
 
     // Centre, between the shoulder groups and above the sticks: MENU and status, the system
@@ -252,26 +278,26 @@ private fun BoxScope.LandscapeLayout(
     // Left side: stick + D-pad + L3
     Stick(
         onMove = { x, y -> input.touch { it.copy(leftX = ControllerState.axis(x), leftY = ControllerState.axis(y)) } },
-        modifier = Modifier.align(Alignment.CenterStart).offset(x = 36.dp, y = (-6).dp),
+        modifier = Modifier.align(Alignment.CenterStart).offset(x = 36.dp, y = (-6).dp).tweak(PadPart.LSTICK),
         size = stick,
     )
     DPad(
         onChange = { mask -> input.touch { it.copy(buttons = (it.buttons and DPAD_MASK.inv()) or mask) } },
-        modifier = Modifier.align(Alignment.BottomStart).offset(x = stick + 40.dp, y = (-16).dp),
+        modifier = Modifier.align(Alignment.BottomStart).offset(x = stick + 40.dp, y = (-16).dp).tweak(PadPart.DPAD),
         size = (stick * 0.8f),
     )
     PadButton("L3", button(Buttons.LEFT_THUMB),
-        Modifier.align(Alignment.BottomStart).offset(x = 20.dp, y = (-18).dp).size(46.dp), fontSize = 13)
+        Modifier.align(Alignment.BottomStart).offset(x = 20.dp, y = (-18).dp).tweak(PadPart.L3).size(46.dp), fontSize = 13)
 
     // Right side: ABXY + stick + R3
     FaceButtons(labels, face, button, Modifier.align(Alignment.CenterEnd).offset(x = (-36).dp, y = (-20).dp))
     Stick(
         onMove = { x, y -> input.touch { it.copy(rightX = ControllerState.axis(x), rightY = ControllerState.axis(y)) } },
-        modifier = Modifier.align(Alignment.BottomEnd).offset(x = -(face * 3 + 56.dp), y = (-12).dp),
+        modifier = Modifier.align(Alignment.BottomEnd).offset(x = -(face * 3 + 56.dp), y = (-12).dp).tweak(PadPart.RSTICK),
         size = stick * 0.85f,
     )
     PadButton("R3", button(Buttons.RIGHT_THUMB),
-        Modifier.align(Alignment.BottomEnd).offset(x = (-20).dp, y = (-18).dp).size(46.dp), fontSize = 13)
+        Modifier.align(Alignment.BottomEnd).offset(x = (-20).dp, y = (-18).dp).tweak(PadPart.R3).size(46.dp), fontSize = 13)
 }
 
 /**
@@ -279,12 +305,12 @@ private fun BoxScope.LandscapeLayout(
  * size (780 × 360 dp) and scaled to fit. Touches go to [onClick], never to the buttons.
  */
 @Composable
-fun ControllerPreview(style: SkinStyle, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun ControllerPreview(style: SkinStyle, modifier: Modifier = Modifier, layout: PadLayout = PadLayout(), onClick: (() -> Unit)? = null) {
     val input = remember { GamepadInput() }
     Box(modifier.aspectRatio(780f / 360f).clip(RoundedCornerShape(14.dp))) {
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val k = maxWidth / 780.dp
-            CompositionLocalProvider(LocalSkin provides style.colors, LocalSkinParts provides style.parts) {
+            CompositionLocalProvider(LocalSkin provides style.colors, LocalSkinParts provides style.parts, LocalPadLayout provides PadLayoutScope(layout, false, null)) {
                 Box(
                     Modifier
                         .wrapContentSize(Alignment.TopStart, unbounded = true)
@@ -314,7 +340,7 @@ private val NINTENDO = PadLabels("ZL", "L", "R", "ZR", "−", "HOME", "+", "B", 
 
 @Composable
 private fun FaceButtons(labels: PadLabels, face: Dp, button: (Int) -> (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.size(face * 3)) {
+    Box(modifier.tweak(PadPart.FACE).size(face * 3)) {
         PadButton(labels.y, button(Buttons.Y), Modifier.align(Alignment.TopCenter).size(face), fontSize = 20, part = Buttons.Y)
         PadButton(labels.x, button(Buttons.X), Modifier.align(Alignment.CenterStart).size(face), fontSize = 20, part = Buttons.X)
         PadButton(labels.b, button(Buttons.B), Modifier.align(Alignment.CenterEnd).size(face), fontSize = 20, part = Buttons.B)
@@ -325,7 +351,7 @@ private fun FaceButtons(labels: PadLabels, face: Dp, button: (Int) -> (Boolean) 
 /** Back / Guide / Start as small pills with the name printed underneath. */
 @Composable
 private fun SystemButtons(labels: PadLabels, button: (Int) -> (Boolean) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.Top) {
+    Row(Modifier.tweak(PadPart.SYSTEM), horizontalArrangement = Arrangement.spacedBy(22.dp), verticalAlignment = Alignment.Top) {
         for ((label, mask) in listOf(labels.back to Buttons.BACK, labels.guide to Buttons.GUIDE, labels.start to Buttons.START)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 PadButton("", button(mask), Modifier.width(50.dp).height(22.dp), PillShape, part = mask)
@@ -344,6 +370,7 @@ private fun Wordmark() {
         fontWeight = FontWeight.Black,
         fontFamily = Rounded,
         letterSpacing = 4.sp,
+        modifier = Modifier.tweak(PadPart.WORDMARK),
     )
 }
 
@@ -369,36 +396,39 @@ private fun PortraitLayout(
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PadButton(labels.lt, { d -> input.touch { it.copy(leftTrigger = if (d) 255 else 0) } },
-                    Modifier.width(72.dp).height(46.dp), TriggerShape, fontSize = 14, part = Part.LT)
-                PadButton(labels.lb, button(Buttons.LEFT_SHOULDER), Modifier.width(72.dp).height(46.dp), PillShape, fontSize = 14, part = Buttons.LEFT_SHOULDER)
+                    Modifier.tweak(PadPart.LT).width(72.dp).height(46.dp), TriggerShape, fontSize = 14, part = Part.LT)
+                PadButton(labels.lb, button(Buttons.LEFT_SHOULDER), Modifier.tweak(PadPart.LB).width(72.dp).height(46.dp), PillShape, fontSize = 14, part = Buttons.LEFT_SHOULDER)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PadButton(labels.rb, button(Buttons.RIGHT_SHOULDER), Modifier.width(72.dp).height(46.dp), PillShape, fontSize = 14, part = Buttons.RIGHT_SHOULDER)
+                PadButton(labels.rb, button(Buttons.RIGHT_SHOULDER), Modifier.tweak(PadPart.RB).width(72.dp).height(46.dp), PillShape, fontSize = 14, part = Buttons.RIGHT_SHOULDER)
                 PadButton(labels.rt, { d -> input.touch { it.copy(rightTrigger = if (d) 255 else 0) } },
-                    Modifier.width(72.dp).height(46.dp), TriggerShape, fontSize = 14, part = Part.RT)
+                    Modifier.tweak(PadPart.RT).width(72.dp).height(46.dp), TriggerShape, fontSize = 14, part = Part.RT)
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Stick(
                 onMove = { x, y -> input.touch { it.copy(leftX = ControllerState.axis(x), leftY = ControllerState.axis(y)) } },
+                modifier = Modifier.tweak(PadPart.LSTICK),
                 size = stick,
             )
             Stick(
                 onMove = { x, y -> input.touch { it.copy(rightX = ControllerState.axis(x), rightY = ControllerState.axis(y)) } },
+                modifier = Modifier.tweak(PadPart.RSTICK),
                 size = stick * 0.85f,
             )
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             DPad(
                 onChange = { mask -> input.touch { it.copy(buttons = (it.buttons and DPAD_MASK.inv()) or mask) } },
+                modifier = Modifier.tweak(PadPart.DPAD),
                 size = stick * 0.9f,
             )
             FaceButtons(labels, face, button)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            PadButton("L3", button(Buttons.LEFT_THUMB), Modifier.size(44.dp), fontSize = 13)
+            PadButton("L3", button(Buttons.LEFT_THUMB), Modifier.tweak(PadPart.L3).size(44.dp), fontSize = 13)
             SystemButtons(labels, button)
-            PadButton("R3", button(Buttons.RIGHT_THUMB), Modifier.size(44.dp), fontSize = 13)
+            PadButton("R3", button(Buttons.RIGHT_THUMB), Modifier.tweak(PadPart.R3).size(44.dp), fontSize = 13)
         }
     }
 }
@@ -415,6 +445,7 @@ private fun ControllerMenu(
     macros: MacroConfig?,
     onEditMacros: (() -> Unit)?,
     onOpenWheel: ((String) -> Unit)?,
+    onEditLayout: (() -> Unit)?,
     onClose: () -> Unit,
 ) {
     val p = LocalPalette.current
@@ -443,6 +474,7 @@ private fun ControllerMenu(
                 add(Triple(Icons.Rounded.PlayArrow, Hue.GREEN, str(R.string.menu_resume)) to onClose)
                 add(Triple(Icons.Rounded.Bedtime, Hue.BLUE, str(R.string.saver)) to { onClose(); a.onScreenSaver() })
                 onEditMacros?.let { add(Triple(Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros)) to { onClose(); it() }) }
+                onEditLayout?.let { add(Triple(Icons.Rounded.OpenWith, Hue.TEAL, str(R.string.layout_edit)) to { onClose(); it() }) }
                 a.onAmiibo?.let { add(Triple(Icons.Rounded.Nfc, Hue.GOLD, str(R.string.nav_amiibo)) to { onClose(); it() }) }
                 add(Triple(Icons.AutoMirrored.Rounded.Logout, Hue.ROSE, str(R.string.menu_leave)) to { onClose(); a.onDisconnect() })
             }
@@ -467,12 +499,14 @@ private fun ControllerMenu(
         if (wide) {
             Row(panel, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Column(Modifier.width(250.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(str(R.string.pad_menu_title), color = p.text, fontSize = 24.sp, fontWeight = FontWeight.Black, fontFamily = Rounded)
+                    // Title and status on one line: the actions below get the height.
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(str(R.string.pad_menu_title), color = p.text, fontSize = 22.sp, fontWeight = FontWeight.Black, fontFamily = Rounded,
+                            modifier = Modifier.padding(end = 6.dp))
                         Dot(statusColor(statusKind), 7.dp)
                         Text(status, color = p.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    FadingColumn(Modifier.weight(1f), spacing = 8.dp) { actions(true) }
+                    FadingColumn(Modifier.weight(1f), spacing = 6.dp) { actions(true) }
                 }
                 Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp), content = tabs)
             }
@@ -540,13 +574,13 @@ private fun ActionRow(icon: ImageVector, hue: Hue, label: String, primary: Boole
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
             .then(if (primary) Modifier.background(Brush.horizontalGradient(listOf(Color(0xFF9B6BFF), Color(0xFF6A2BE8)))) else Modifier.glass(RoundedCornerShape(18.dp)))
-            .clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 7.dp),
+            .clickable(onClick = onClick).padding(horizontal = 12.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (primary) {
-            Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Color.White, modifier = Modifier.size(26.dp)) }
-        } else IconTile(icon, hue, 32.dp)
+            Box(Modifier.size(30.dp), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Color.White, modifier = Modifier.size(24.dp)) }
+        } else IconTile(icon, hue, 30.dp)
         Text(label, color = if (primary) Color.White else LocalPalette.current.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded)
     }
 }
