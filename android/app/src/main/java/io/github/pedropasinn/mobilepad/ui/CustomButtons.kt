@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -95,6 +96,7 @@ fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput
     val timers = remember { mutableMapOf<String, Job>() }
     val releasing = remember { mutableSetOf<String>() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     for (b in buttons) {
         val on = latched[b.id] == true
         PadButton(
@@ -115,9 +117,10 @@ fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput
                             latched[b.id] = false
                             releasing += b.id
                             b.out.press(input, false)
+                            buzz(context, locked = false)
                         } else {
                             b.out.press(input, true)
-                            timers[b.id] = scope.launch { delay(LATCH_HOLD_MS); latched[b.id] = true }
+                            timers[b.id] = scope.launch { delay(LATCH_HOLD_MS); latched[b.id] = true; buzz(context, locked = true) }
                         }
                     } else {
                         timers.remove(b.id)?.cancel()
@@ -138,4 +141,24 @@ fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput
             selected = on,
         )
     }
+}
+
+/**
+ * Felt without looking: a strong double knock when a button locks on, a light tick when it lets go.
+ * Independent of the system touch-feedback setting.
+ */
+private fun buzz(context: android.content.Context, locked: Boolean) {
+    val vibrator = if (android.os.Build.VERSION.SDK_INT >= 31) {
+        context.getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION") context.getSystemService(android.os.Vibrator::class.java)
+    } ?: return
+    val effect = when {
+        android.os.Build.VERSION.SDK_INT >= 29 -> android.os.VibrationEffect.createPredefined(
+            if (locked) android.os.VibrationEffect.EFFECT_DOUBLE_CLICK else android.os.VibrationEffect.EFFECT_TICK,
+        )
+        locked -> android.os.VibrationEffect.createWaveform(longArrayOf(0, 35, 60, 35), -1)
+        else -> android.os.VibrationEffect.createOneShot(15, android.os.VibrationEffect.DEFAULT_AMPLITUDE)
+    }
+    runCatching { vibrator.vibrate(effect) }
 }
