@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_names">Nomi dei tasti</string>
+    <string name="names_auto">Auto</string>
+    <string name="button_names_note">Cambia solo la scritta. Auto: Nintendo sulla Switch, Xbox negli altri casi.</string>
+</resources>

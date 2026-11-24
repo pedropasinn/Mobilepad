@@ -90,6 +90,7 @@ class MainActivity : ComponentActivity() {
     private var layoutLand by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     private var layoutPort by mutableStateOf(io.github.pedropasinn.mobilepad.ui.PadLayout())
     private var editLayout by mutableStateOf(false)
+    private var buttonNames by mutableStateOf(io.github.pedropasinn.mobilepad.ui.ButtonNames.AUTO)
     /** The editor was opened from the Controller page: Done goes back there. */
     private var editFromHome = false
     private val skinLibrary by lazy { io.github.pedropasinn.mobilepad.skin.DeltaSkinLibrary(filesDir) }
@@ -236,6 +237,7 @@ class MainActivity : ComponentActivity() {
         deltaSkinId = prefs.deltaSkin
         remap = prefs.remap
         layoutLand = prefs.layoutLandscape
+        buttonNames = prefs.buttonNames
         layoutPort = prefs.layoutPortrait
         input.remap = remap
         lifecycleScope.launch { skinLibrary.load() }
@@ -321,6 +323,14 @@ class MainActivity : ComponentActivity() {
                 status is ConnectionStatus.Connecting -> StatusKind.BUSY
                 else -> StatusKind.IDLE
             }
+            val onSwitch = (bluetoothProfileId == SwitchProProfile.ID && btState is BluetoothGamepad.State.Connected) ||
+                (status as? ConnectionStatus.Connected)?.pcOs?.startsWith("Switch") == true
+            val resolvedNames = when (buttonNames) {
+                io.github.pedropasinn.mobilepad.ui.ButtonNames.AUTO ->
+                    if (onSwitch) io.github.pedropasinn.mobilepad.ui.ButtonNames.NINTENDO else io.github.pedropasinn.mobilepad.ui.ButtonNames.XBOX
+                else -> buttonNames
+            }
+            androidx.compose.runtime.SideEffect { io.github.pedropasinn.mobilepad.ui.ActiveButtonNames.value = resolvedNames }
             val deltaSkins by skinLibrary.skins.collectAsState()
             val activeDelta = deltaSkins.firstOrNull { it.dir.name == deltaSkinId }
             val builtInName = str(skin.nameRes)
@@ -358,9 +368,7 @@ class MainActivity : ComponentActivity() {
                     radial = radial,
                     style = padStyle,
                     statusKind = statusKind,
-                    nintendoLayout = (bluetoothProfileId == SwitchProProfile.ID &&
-                        btState is BluetoothGamepad.State.Connected) ||
-                        (status as? ConnectionStatus.Connected)?.pcOs?.startsWith("Switch") == true,
+                    nintendoLayout = resolvedNames == io.github.pedropasinn.mobilepad.ui.ButtonNames.NINTENDO,
                     onDisconnect = {
                         connection.disconnect()
                         bluetooth.disconnectHost()
@@ -459,6 +467,8 @@ class MainActivity : ComponentActivity() {
                         style = padStyle,
                         layout = layoutLand,
                         layoutChanges = layoutLand.tweaks.size + layoutPort.tweaks.size,
+                        buttonNames = buttonNames,
+                        onButtonNames = { buttonNames = it; prefs.buttonNames = it },
                         onEditLayout = { editLayout = true; editFromHome = true; showPad = true },
                         onResetLayout = {
                             layoutLand = io.github.pedropasinn.mobilepad.ui.PadLayout(); prefs.layoutLandscape = layoutLand

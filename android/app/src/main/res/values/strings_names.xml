@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_names">Button names</string>
+    <string name="names_auto">Auto</string>
+    <string name="button_names_note">Only the printing changes. Auto: Nintendo on a Switch, Xbox otherwise.</string>
+</resources>

@@ -155,6 +155,8 @@ class ControllerPanel(
     val layoutChanges: Int = 0,
     val onEditLayout: () -> Unit = {},
     val onResetLayout: () -> Unit = {},
+    val buttonNames: ButtonNames = ButtonNames.AUTO,
+    val onButtonNames: (ButtonNames) -> Unit = {},
     /** Portrait layout, to tell which ready-made layout is in use. */
     val portraitLayout: PadLayout = PadLayout(),
     /** Applies a ready-made layout to both orientations. */
@@ -510,7 +512,8 @@ private fun ControllerPage(wide: Boolean, c: ControllerPanel) {
         items = listOf(
             PaneItem("skin", Icons.Rounded.Style, Hue.VIOLET, str(R.string.skin), c.currentName) { SkinGallery(c, large = !wide) },
             PaneItem("layout", Icons.Rounded.OpenWith, Hue.ORANGE, str(R.string.layout_title),
-                if (c.layoutChanges == 0) str(R.string.remap_none) else str(R.string.layout_count, c.layoutChanges)) {
+                (if (c.layoutChanges == 0) str(R.string.remap_none) else str(R.string.layout_count, c.layoutChanges)) +
+                    " · " + namesLabel(c.buttonNames)) {
                 LayoutPane(c)
             },
             PaneItem("macros", Icons.Rounded.AutoAwesome, Hue.ROSE, str(R.string.nav_macros), c.macroSummary, onOpen = c.onMacros),
@@ -543,6 +546,12 @@ private fun orientationName(o: ScreenOrientation) = when (o) {
 @Composable
 private fun LayoutPane(c: ControllerPanel) {
     val screen = rememberPresetScreen()
+    SectionLabel(str(R.string.button_names))
+    Segmented(
+        ButtonNames.entries.map { it to namesLabel(it) },
+        c.buttonNames, c.onButtonNames, Modifier.fillMaxWidth(),
+    )
+    Note(str(R.string.button_names_note))
     c.style?.let {
         LayoutPresetPicker(it, screen, c.layout, c.portraitLayout, c.onLayoutPreset)
     }
@@ -594,6 +603,14 @@ private fun SkinGallery(c: ControllerPanel, large: Boolean) {
 
 @Composable
 private fun builtInName(id: SkinId) = str(id.nameRes)
+
+@Composable
+private fun namesLabel(n: ButtonNames) = when (n) {
+    ButtonNames.AUTO -> str(R.string.names_auto)
+    ButtonNames.XBOX -> "Xbox"
+    ButtonNames.PLAYSTATION -> "PS"
+    ButtonNames.NINTENDO -> "Nintendo"
+}
 
 @Composable
 private fun SkinCard(style: SkinStyle?, name: String, caption: String?, selected: Boolean, onClick: () -> Unit, onDelete: (() -> Unit)? = null, modifier: Modifier = Modifier.width(156.dp)) {

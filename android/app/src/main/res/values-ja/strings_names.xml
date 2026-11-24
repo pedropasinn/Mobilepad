@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_names">ボタンの表記</string>
+    <string name="names_auto">自動</string>
+    <string name="button_names_note">表記だけが変わります。自動：Switch では Nintendo、それ以外は Xbox。</string>
+</resources>

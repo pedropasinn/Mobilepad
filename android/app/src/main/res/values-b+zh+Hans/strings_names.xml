@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_names">按键名称</string>
+    <string name="names_auto">自动</string>
+    <string name="button_names_note">只改变显示的文字。自动：Switch 上用任天堂，其他用 Xbox。</string>
+</resources>

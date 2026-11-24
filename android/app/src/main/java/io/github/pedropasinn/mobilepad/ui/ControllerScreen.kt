@@ -148,7 +148,9 @@ fun ControllerScreen(
     onEditLayoutDone: () -> Unit = {},
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    BackHandler(enabled = menuOpen) { menuOpen = false }
+    // Back never leaves the controller by accident mid-game: it opens the pause menu, where
+    // "Leave" is; pressed again it closes the menu.
+    BackHandler(enabled = !editingLayout) { menuOpen = !menuOpen }
     BackHandler(enabled = editingLayout && !menuOpen) { onEditLayoutDone() }
     var selectedPart by remember { mutableStateOf<String?>(null) }
     val partBounds = remember { androidx.compose.runtime.mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>() }
@@ -162,7 +164,7 @@ fun ControllerScreen(
         axisPreset, onAxisPreset, rumble, onRumble, onRecenter, onAmiibo,
     )
     fun button(mask: Int): (Boolean) -> Unit = { down -> input.touch { it.with(mask, down) } }
-    val labels = if (nintendoLayout) NINTENDO else XBOX
+    val labels = ActiveButtonNames.value.labels()
     val shell = style.colors
 
     CompositionLocalProvider(LocalSkin provides shell, LocalSkinParts provides style.parts, LocalPadLayout provides layoutScope) {
@@ -317,7 +319,7 @@ fun ControllerPreview(
                         .graphicsLayer { scaleX = k; scaleY = k; transformOrigin = TransformOrigin(0f, 0f) }
                         .background(Brush.verticalGradient(listOf(style.colors.shellTop, style.colors.shellBottom))),
                 ) {
-                    LandscapeLayout(input, XBOX, screen.height, { MenuBlock("Mobilepad", StatusKind.CONNECTED, false, {}, {}) }) { { } }
+                    LandscapeLayout(input, ActiveButtonNames.value.labels(), screen.height, { MenuBlock("Mobilepad", StatusKind.CONNECTED, false, {}, {}) }) { { } }
                 }
             }
         }
@@ -336,6 +338,23 @@ private class PadLabels(
 private val XBOX = PadLabels("LT", "LB", "RB", "RT", "BACK", "GUIDE", "START", "A", "B", "X", "Y")
 // Nintendo printing: the east button is A, the south one B.
 private val NINTENDO = PadLabels("ZL", "L", "R", "ZR", "−", "HOME", "+", "B", "A", "Y", "X")
+// PlayStation printing: cross south, circle east, square west, triangle north.
+private val PLAYSTATION = PadLabels("L2", "L1", "R1", "R2", "SHARE", "PS", "OPTIONS", "✕", "○", "□", "△")
+
+/** Which console's names are printed on the controller; [AUTO] follows the connection. */
+enum class ButtonNames { AUTO, XBOX, PLAYSTATION, NINTENDO }
+
+private fun ButtonNames.labels() = when (this) {
+    ButtonNames.NINTENDO -> NINTENDO
+    ButtonNames.PLAYSTATION -> PLAYSTATION
+    else -> XBOX
+}
+
+/**
+ * Names in use right now ([ButtonNames.AUTO] already resolved), set by the activity; the
+ * controller and every miniature print them.
+ */
+val ActiveButtonNames = androidx.compose.runtime.mutableStateOf(ButtonNames.XBOX)
 
 @Composable
 private fun FaceButtons(labels: PadLabels, face: Dp, button: (Int) -> (Boolean) -> Unit, modifier: Modifier = Modifier) {

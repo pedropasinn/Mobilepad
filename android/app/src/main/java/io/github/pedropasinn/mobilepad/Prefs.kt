@@ -86,6 +86,12 @@ class Prefs(context: Context) {
         get() = io.github.pedropasinn.mobilepad.ui.PadLayout.decode(prefs.getString(KEY_LAYOUT_PORT, null))
         set(value) = prefs.edit().putString(KEY_LAYOUT_PORT, value.encode()).apply()
 
+    /** Names printed on the controller's buttons. */
+    var buttonNames: io.github.pedropasinn.mobilepad.ui.ButtonNames
+        get() = runCatching { io.github.pedropasinn.mobilepad.ui.ButtonNames.valueOf(prefs.getString(KEY_BUTTON_NAMES, null)!!) }
+            .getOrDefault(io.github.pedropasinn.mobilepad.ui.ButtonNames.AUTO)
+        set(value) = prefs.edit().putString(KEY_BUTTON_NAMES, value.name).apply()
+
     /** App language: "" follows the system, otherwise a tag from MobilepadApp.LANGUAGES. */
     var language: String
         get() = prefs.getString(KEY_LANGUAGE, null) ?: ""
@@ -101,6 +107,7 @@ class Prefs(context: Context) {
         const val KEY_THEME = "theme"
         const val KEY_SKIN = "skin"
         const val KEY_REMAP = "remap"
+        const val KEY_BUTTON_NAMES = "button_names"
         const val KEY_LAYOUT_LAND = "layout_land"
         const val KEY_LAYOUT_PORT = "layout_port"
         const val KEY_DELTA_SKIN = "delta_skin"
