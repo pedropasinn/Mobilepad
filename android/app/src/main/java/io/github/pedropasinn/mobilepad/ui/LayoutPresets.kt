@@ -350,12 +350,13 @@ fun LayoutPresetPicker(
     fun apply(p: LayoutPreset) = built.getValue(p).let { onApply(it.first, it.second) }
 
     SectionLabel(str(R.string.preset_section))
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(LayoutPreset.entries) { p ->
+    CardGrid(LayoutPreset.entries.map { p ->
+        val card: @Composable (Modifier) -> Unit = { m ->
             val pick = { if (custom) confirm = p else apply(p) }
-            PresetCard(style, screen, built.getValue(p).first, str(p.title), str(p.caption), p == current, pick)
+            PresetCard(style, screen, built.getValue(p).first, str(p.title), str(p.caption), p == current, pick, m)
         }
-    }
+        card
+    })
 
     confirm?.let { p ->
         AlertDialog(
@@ -369,16 +370,15 @@ fun LayoutPresetPicker(
 }
 
 @Composable
-private fun PresetCard(style: SkinStyle, screen: PresetScreen, layout: PadLayout, name: String, caption: String, selected: Boolean, onClick: () -> Unit) {
+private fun PresetCard(style: SkinStyle, screen: PresetScreen, layout: PadLayout, name: String, caption: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier.width(156.dp)) {
     val p = LocalPalette.current
     Column(
-        Modifier.width(156.dp).glass(RoundedCornerShape(18.dp), selected).clickable(onClick = onClick).padding(8.dp),
+        modifier.glass(RoundedCornerShape(18.dp), selected).clickable(onClick = onClick).padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         ControllerPreview(style, Modifier.fillMaxWidth(), layout = layout, screen = screen.landscape, onClick = onClick)
         Column(Modifier.padding(horizontal = 4.dp)) {
             Text(name, color = p.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(caption, color = p.muted, fontSize = 11.sp, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

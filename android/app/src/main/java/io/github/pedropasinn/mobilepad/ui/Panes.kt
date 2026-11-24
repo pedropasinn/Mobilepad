@@ -252,3 +252,22 @@ fun FieldRow(label: String, modifier: Modifier = Modifier, control: @Composable 
 fun Hairline() {
     Box(Modifier.fillMaxWidth().height(1.dp).clip(RoundedCornerShape(1.dp)).background(LocalPalette.current.outline))
 }
+
+/**
+ * Cards in rows, as many columns as fit at [minWidth] (at least two), all the same width. Not lazy:
+ * it sits inside the detail panel's own scrolling column.
+ */
+@Composable
+fun CardGrid(cards: List<@Composable (Modifier) -> Unit>, minWidth: Dp = 108.dp, spacing: Dp = 8.dp) {
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val cols = ((maxWidth + spacing) / (minWidth + spacing)).toInt().coerceAtLeast(2)
+        Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
+            cards.chunked(cols).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    row.forEach { card -> card(Modifier.weight(1f)) }
+                    repeat(cols - row.size) { androidx.compose.foundation.layout.Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+    }
+}

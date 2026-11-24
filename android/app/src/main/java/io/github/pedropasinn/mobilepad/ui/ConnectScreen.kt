@@ -80,6 +80,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material.icons.rounded.Gamepad
 import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.rounded.Bolt
@@ -543,7 +544,6 @@ private fun orientationName(o: ScreenOrientation) = when (o) {
 private fun LayoutPane(c: ControllerPanel) {
     val screen = rememberPresetScreen()
     c.style?.let {
-        ControllerPreview(it, Modifier.fillMaxWidth().widthIn(max = 520.dp), layout = c.layout, onClick = c.onEditLayout, screen = screen.landscape)
         LayoutPresetPicker(it, screen, c.layout, c.portraitLayout, c.onLayoutPreset)
     }
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -569,18 +569,24 @@ private fun SkinGallery(c: ControllerPanel, large: Boolean) {
         else Box(Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(14.dp)).background(LocalPalette.current.surfaceHigh))
     }
 
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        items(SkinId.entries) { id ->
-            val name = builtInName(id)
-            SkinCard(builtInStyle(id, name), name, str(R.string.skin_builtin), c.selected == null && c.builtIn == id, onClick = {
-                c.onBuiltIn(id); c.onSelect(null)
-            })
+    // Every skin at a glance: a grid instead of a row to scroll sideways.
+    CardGrid(buildList {
+        SkinId.entries.forEach { id ->
+            add { m: Modifier ->
+                val name = builtInName(id)
+                SkinCard(builtInStyle(id, name), name, null, c.selected == null && c.builtIn == id, onClick = {
+                    c.onBuiltIn(id); c.onSelect(null)
+                }, modifier = m)
+            }
         }
-        items(c.skins, key = { it.dir.name }) { s ->
-            SkinCard(rememberDeltaStyle(s), s.name, s.console, c.selected == s.dir.name, onClick = { c.onSelect(s.dir.name) }, onDelete = { c.onDelete(s) })
+        c.skins.forEach { s ->
+            add { m: Modifier ->
+                SkinCard(rememberDeltaStyle(s), s.name, s.console, c.selected == s.dir.name, onClick = { c.onSelect(s.dir.name) },
+                    onDelete = { c.onDelete(s) }, modifier = m)
+            }
         }
-        item { ImportCard(c.onImport) }
-    }
+        add { m: Modifier -> ImportCard(c.onImport, m) }
+    })
     Note(str(R.string.skin_import_note))
     val uri = LocalUriHandler.current
     TextButton(onClick = { uri.openUri("https://deltastyles.com") }) { Text("deltastyles.com ↗", maxLines = 1) }
@@ -590,10 +596,10 @@ private fun SkinGallery(c: ControllerPanel, large: Boolean) {
 private fun builtInName(id: SkinId) = str(id.nameRes)
 
 @Composable
-private fun SkinCard(style: SkinStyle?, name: String, caption: String, selected: Boolean, onClick: () -> Unit, onDelete: (() -> Unit)? = null) {
+private fun SkinCard(style: SkinStyle?, name: String, caption: String?, selected: Boolean, onClick: () -> Unit, onDelete: (() -> Unit)? = null, modifier: Modifier = Modifier.width(156.dp)) {
     val p = LocalPalette.current
     Column(
-        Modifier.width(156.dp).glass(RoundedCornerShape(18.dp), selected).clickable(onClick = onClick).padding(8.dp),
+        modifier.glass(RoundedCornerShape(18.dp), selected).clickable(onClick = onClick).padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box {
@@ -609,23 +615,29 @@ private fun SkinCard(style: SkinStyle?, name: String, caption: String, selected:
         }
         Column(Modifier.padding(horizontal = 4.dp)) {
             Text(name, color = p.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(caption, color = p.muted, fontSize = 11.sp, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (caption != null) Text(caption, color = p.muted, fontSize = 11.sp, fontFamily = Rounded, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
 
+/** Same shape as a skin card: a dashed slot where the miniature would be, and the action below. */
 @Composable
-private fun ImportCard(onImport: () -> Unit) {
+private fun ImportCard(onImport: () -> Unit, modifier: Modifier = Modifier.width(156.dp)) {
     val p = LocalPalette.current
     Column(
-        Modifier.width(156.dp).height(118.dp).glass(RoundedCornerShape(18.dp)).clickable(onClick = onImport).padding(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+        modifier.glass(RoundedCornerShape(18.dp)).clickable(onClick = onImport).padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Box(Modifier.size(40.dp).clip(CircleShape).background(Accent), contentAlignment = Alignment.Center) {
-            Icon(Icons.Rounded.Add, null, tint = Color.White)
+        Box(
+            Modifier.fillMaxWidth().aspectRatio(780f / 360f).clip(RoundedCornerShape(14.dp)).background(p.surfaceHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(36.dp).clip(CircleShape).background(Accent), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Add, null, tint = Color.White)
+            }
         }
-        Text(str(R.string.skin_import), color = p.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded, textAlign = TextAlign.Center)
+        Text(str(R.string.skin_import), color = p.text, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp))
     }
 }
 
