@@ -36,8 +36,9 @@
   | macOS | – | Generic gamepad + keyboard (SDL/Steam games) |
   | Android phone, tablet, Android TV, Google TV | – | Gamepad + keyboard, recognised natively |
   | Nintendo Switch | Sysmodule → Pro Controller (Atmosphère, Wi‑Fi) | Pro Controller (Shizuku) |
-- **Measured latency** (Galaxy S25 → laptop, [labs/AUDITORIA.md](labs/AUDITORIA.md)): USB ~6 ms P50
-  (P99 11 ms), Bluetooth ~11 ms P50 (P99 ~31 ms).
+- **Measured latency** (Galaxy S25 → laptop, touch command → what a game reads, 2,000 presses
+  each): USB cable ~5.6 ms median, Bluetooth ~9 ms median, no presses lost. Details in
+  [Measured results](#measured-results).
 - **Home** with a bottom dock (Connect, Controller, Motion, Extras, Settings); *Search* lists companions
   and consoles on the local network, QR code and `IP:port` still work.
 - **Layout editor**: drag, resize, change the opacity of or hide any part; landscape and portrait are
@@ -200,6 +201,35 @@ cable (ADB) for clock sync and triggering whatever link is tested.
   `usb`, `wifi`, `bt`.
 - Spec and results: [labs/README.md](labs/README.md), [labs/SPEC.md](labs/SPEC.md),
   [labs/AUDITORIA.md](labs/AUDITORIA.md).
+
+### Measured results
+
+Galaxy S25 → Windows laptop, Mobilepad Lab, 2,000 presses of one button (4,001 states) per link,
+from the moment the app commands the press to the moment a game reads it (XInput for USB,
+Windows.Gaming.Input for Bluetooth). Phone→PC times depend on clock sync (±5 ms); times inside one
+device are measured directly.
+
+| Link | Median | P90 | P95 | P99 | Worst | Lost |
+|---|---|---|---|---|---|---|
+| **USB cable** (companion + virtual Xbox pad) | **5.6 ms** | 11.2 ms | 17.7 ms | 51 ms | 209 ms | 0 |
+| **Bluetooth** (PC · Android · TV mode) | **9.0 ms** | 19.5 ms | 22.0 ms | 27.5 ms | 85 ms | 0 |
+
+Where the time goes (medians):
+
+| Stage | USB cable | Bluetooth |
+|---|---|---|
+| Inside the phone (command → handed to the link) | 1.3 ms | 1.9 ms |
+| Link (cable via ADB / Bluetooth radio) → PC | 4.1 ms | 6.3 ms (radio → game) |
+| Companion → virtual pad | 0.13 ms | — |
+| Virtual pad → game | 0.06 ms | — |
+
+- **USB cable**: the fastest link and the best median. The ADB tunnel alone is clean (3,000 round
+  trips: median 2.7 ms, worst 8.6 ms), so the rarer spikes in the table come from the laptop being
+  busy (other apps, a video playing doubled them), not from the cable; still being investigated.
+- **Bluetooth**: about 60% of presses arrive in 2–8 ms; the rest wait for the next radio window
+  when the link has been idle (Bluetooth power saving), up to ~25 ms. Turning the phone's Wi‑Fi off
+  made no difference.
+- For reference, one frame at 60 fps is 16.7 ms.
 
 ## Compatibility with Remote Gamepad
 
