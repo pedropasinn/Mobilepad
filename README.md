@@ -69,11 +69,18 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/menu.png" width="420" alt="In-game menu">
-  <img src="docs/images/connect.png" width="420" alt="Connection screen">
-  <img src="docs/images/settings.png" width="420" alt="Settings: controller skin, appearance, import Delta skins">
-  <img src="docs/images/macros.png" width="420" alt="Macros and radial menus">
-  <img src="docs/images/motion.png" width="420" alt="Motion settings">
+  <img src="docs/images/mario-kart.png" width="420" alt="Mario Kart Wii preset: floating stick and icon buttons on the right">
+  <img src="docs/images/layout-editor.png" width="420" alt="Layout editor: move, resize, opacity, custom buttons with lock">
+  <img src="docs/images/connect.png" width="420" alt="Connect: Wi-Fi, USB and Bluetooth">
+  <img src="docs/images/profiles.png" width="420" alt="Game profiles">
+  <img src="docs/images/skins.png" width="420" alt="Controller skins">
+  <img src="docs/images/motion.png" width="420" alt="Motion: steering, sensor, shake, DSU">
+  <img src="docs/images/menu.png" width="420" alt="In-game menu with quick settings">
+  <img src="docs/images/macros.png" width="420" alt="Macros and radial wheels">
+</p>
+
+<p align="center">
+  <img src="docs/images/lab.png" width="720" alt="Mobilepad Lab in the companion: latency per stage, histogram, CDF, losses">
 </p>
 
 ## Download
