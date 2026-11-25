@@ -921,6 +921,11 @@ class MainActivity : ComponentActivity() {
      * Output in `<external files>/lab/<labRun>/` (phone.csv, done.json).
      */
     private fun startLab(intent: Intent?) {
+        // Lab knob (experiments only): Bluetooth report pacing, kept until the app restarts.
+        if (intent?.hasExtra("btIntervalMs") == true) {
+            io.github.pedropasinn.mobilepad.bt.GenericGamepadProfile.minIntervalMs = intent.getIntExtra("btIntervalMs", 12)
+            intent.removeExtra("btIntervalMs")
+        }
         if (intent?.getBooleanExtra("lab", false) != true) return
         intent.removeExtra("lab") // a recreated activity must not start it again
         @Suppress("DEPRECATION")

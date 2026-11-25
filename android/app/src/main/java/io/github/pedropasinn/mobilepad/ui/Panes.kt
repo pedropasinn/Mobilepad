@@ -34,6 +34,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -187,8 +191,12 @@ private fun PaneRow(
     ) {
         IconTile(item.icon, item.hue, if (flat) 38.dp else 34.dp)
         Column(Modifier.weight(1f)) {
-            Text(item.title, color = p.text, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
-                maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 18.sp)
+            // One line, shrinking a little when a translation is long (e.g. "Macros & wheels"),
+            // so the summary below is never pushed out of the row.
+            var titleSize by remember(item.title) { mutableFloatStateOf(15f) }
+            Text(item.title, color = p.text, fontSize = titleSize.sp, fontWeight = FontWeight.ExtraBold, fontFamily = Rounded,
+                maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, lineHeight = 18.sp,
+                onTextLayout = { if (it.hasVisualOverflow && titleSize > 12f) titleSize -= 0.5f })
             if (item.badges.isNotEmpty()) {
                 Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     item.badges.forEach { b ->
