@@ -7,11 +7,10 @@
 <p align="center">
   Turn your Android phone into a low-latency game controller for Windows, Linux, macOS,
   Android phones, tablets and TVs, and Nintendo Switch.<br>
-  Wi‑Fi · USB · Bluetooth · physical controller passthrough · macros and radial menus · Delta skins · dark and OLED themes
+  USB · Wi‑Fi · Bluetooth · editable layouts and presets · game profiles · motion · macros and radial menus · skins
 </p>
 
 <p align="center">
-  <a href="README.it.md">Italiano</a> ·
   <a href="#download">Download</a> ·
   <a href="docs/PROTOCOL.md">Protocol</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -23,32 +22,49 @@
 
 ## Features
 
-- **Works with many hosts**
-  | Host | Wi‑Fi / USB | Bluetooth (no software on the host) |
+- **Three ways to connect**
+  | Link | How | Host sees |
   |---|---|---|
-  | Windows 10/11 | Companion → Xbox 360 controller (XInput) | Generic gamepad + keyboard |
+  | USB | Companion on the PC + `adb reverse` over the cable (set up by the companion) | Xbox 360 controller |
+  | Wi‑Fi | Companion (Windows/Linux) or the Switch sysmodule (Atmosphère) | Xbox 360 controller / Pro Controller |
+  | Bluetooth HID | *PC · Android · TV*: generic gamepad + keyboard, no software on the host; *Switch*: Pro Controller (needs Shizuku) | Gamepad / Pro Controller |
+
+  | Host | USB / Wi‑Fi | Bluetooth |
+  |---|---|---|
+  | Windows 10/11 | Companion → Xbox 360 controller (XInput, ViGEm) | Generic gamepad + keyboard |
   | Linux | Companion → Xbox 360 controller (uinput) | Generic gamepad + keyboard |
   | macOS | – | Generic gamepad + keyboard (SDL/Steam games) |
   | Android phone, tablet, Android TV, Google TV | – | Gamepad + keyboard, recognised natively |
-  | Nintendo Switch with Atmosphère (CFW) | Sysmodule → Pro Controller | – |
-- **Finds hosts by itself** – *Search* lists companions and consoles on the local network;
-  QR code and `IP:port` still work.
-- **Physical controller passthrough** – plug a controller into the phone (e.g. GameSir G8 Galileo):
-  its input is merged with the touch controls and sent to the PC.
-- **Rumble and player index** forwarded from the game to the phone.
-- **Landscape or vertical** – fixed landscape, reversed, Android's auto-rotate, or a Game Boy-style
-  vertical layout (*Settings → Orientation*).
-- **Dark and OLED black themes** – a dark anthracite theme by default; *OLED black* uses pure black,
-  so OLED pixels stay off. Layouts adapt to phones, tablets and Android handhelds, in landscape and portrait.
-- **Five languages** – English, Italian, Chinese (simplified and traditional) and Japanese, in the app
-  and in the companions; the system language is used, English otherwise.
-- **Macros and radial menus**, reWASD style, with a visual editor:
-  - trigger combos recorded straight from the controller (e.g. **L3 + R3**);
-  - output sequences of controller buttons, **PC keys** (Ctrl, Alt, Win, F1–F24…), stick moves
-    and waits, with optional turbo;
-  - radial menus with **icons and coloured slices**, chosen with a stick;
-  - a combo window keeps the first button of a combo from leaking to the game.
-
+  | Nintendo Switch | Sysmodule → Pro Controller (Atmosphère, Wi‑Fi) | Pro Controller (Shizuku) |
+- **Measured latency** (Galaxy S25 → laptop, [labs/AUDITORIA.md](labs/AUDITORIA.md)): USB ~6 ms P50
+  (P99 11 ms), Bluetooth ~11 ms P50 (P99 ~31 ms).
+- **Home** with a bottom dock (Connect, Controller, Motion, Extras, Settings); *Search* lists companions
+  and consoles on the local network, QR code and `IP:port` still work.
+- **Layout editor**: drag, resize, change the opacity of or hide any part; landscape and portrait are
+  saved separately (orientation: landscape, reversed, auto-rotate or a Game Boy-style vertical
+  layout). Optional floating stick that centres where the thumb lands.
+- **Custom buttons**: name, icon, output and size; a button can latch after a 0.25 s hold (a tap
+  stays an ordinary press), with a vibration when it locks and releases.
+- **Presets**, including a ready-made **Mario Kart Wii** layout (icon buttons, latching gas pedal,
+  floating stick). Two layouts at hand: swap race ⇄ menus from the quick menu or a custom swap button.
+- **Skins**: built-in skins with per-button face colours, plus imported Delta skins (`.deltaskin`).
+- **Button names** per console: Auto, Xbox, PlayStation (symbols in their colours) or Nintendo.
+- **Game profiles** keep skin, layouts, button names, remap, macros and motion together; edits are
+  saved into the active profile. The Bluetooth name the phone shows to hosts is editable.
+- **Motion**: gyro/accelerometer as a Joy-Con-style motion sensor (Switch sysmodule, Bluetooth Pro
+  Controller) or tilt as left-stick input (any host).
+- **Macros and radial menus**, reWASD style, with a visual editor: combo triggers recorded from the
+  controller (e.g. **L3 + R3**); sequences of buttons, **PC keys**, stick moves and waits, with
+  optional turbo; radial menus with icons and coloured slices, chosen with a stick.
+- **Physical controller passthrough**: a controller plugged into the phone is merged with the touch
+  controls. **Rumble and player index** are forwarded from the game to the phone.
+- **Dark and OLED black themes**; layouts adapt to phones, tablets and Android handhelds.
+- **Mobilepad Lab**: latency per stage, multi-button, analog, throughput, reliability and reconnect
+  tests, run from the companion ([labs/README.md](labs/README.md), see below).
+- **Dolphin profiles** for the GameCube controller over USB/Wi‑Fi and Bluetooth in
+  [docs/dolphin/](docs/dolphin/README.md).
+- **Languages**: English, Portuguese (Brazil), Italian, Chinese (simplified and traditional) and
+  Japanese; the system language is used, English otherwise.
 
 ## Screenshots
 
@@ -62,8 +78,7 @@
 
 ## Download
 
-> The app and the companions are available in English, Italian, Chinese and Japanese. Corrections
-> from native speakers and new languages are welcome – see [CONTRIBUTING.md](CONTRIBUTING.md).
+> Corrections from native speakers and new languages are welcome – see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Get the latest builds from the [Releases](../../releases) page:
 
@@ -147,7 +162,7 @@ which needs a phone that can change its Bluetooth device class (most cannot with
 
 ### Bluetooth (no software on the host)
 
-1. In the app tap *Turn on Bluetooth*, then *Make visible*.
+1. In the app pick *PC · Android · TV*, tap *Turn on Bluetooth*, then *Make visible*.
 2. On the PC, Mac, phone or TV add a Bluetooth device and pick the phone.
 3. Next time the phone reconnects by itself when the app starts.
 
@@ -155,7 +170,7 @@ On Android and Google TV the gamepad and keyboard work out of the box. On macOS 
 seen by SDL and Steam games; Apple's GameController framework (App Store games) only accepts
 Xbox, PlayStation and Switch controllers, and macOS has no virtual Xbox driver for a companion.
 
-While Bluetooth mode is on the app shows a "Gamepad Bluetooth attivo" notification: Android
+While Bluetooth mode is on the app shows a "Bluetooth gamepad on" notification: Android
 drops Bluetooth gamepads of apps that go to the background. If the phone was paired before with
 another gamepad app, remove it from the PC and pair again: hosts cache the HID descriptor at pairing.
 
@@ -164,6 +179,20 @@ another gamepad app, remove it from the PC and pair again: hosts cache the HID d
 Install and start [Shizuku](https://shizuku.rikka.app/) (wireless debugging or ADB), then tap
 *Grant* in *Settings → Shizuku*: the shell confirms the pairing before the Switch gives up and gives
 the phone the gamepad class of device.
+
+## Mobilepad Lab
+
+Measures the controller end to end: latency per stage, several buttons at once, analog axes,
+throughput, reliability and reconnection, over USB, Wi‑Fi or Bluetooth. The phone stays on the USB
+cable (ADB) for clock sync and triggering whatever link is tested.
+
+- In the Windows companion click **Lab**, pick test and link, press Run; results (histogram, CDF,
+  per-stage bars, metrics) are kept per app version under `%LOCALAPPDATA%\Mobilepad\lab\runs\`.
+- Scripted runs: `MobilepadCompanion.exe --lab <test> <link> [count]`, with `<test>` one of
+  `latency`, `multi`, `analog`, `throughput`, `reliability`, `reconnect` and `<link>` one of
+  `usb`, `wifi`, `bt`.
+- Spec and results: [labs/README.md](labs/README.md), [labs/SPEC.md](labs/SPEC.md),
+  [labs/AUDITORIA.md](labs/AUDITORIA.md).
 
 ## Compatibility with Remote Gamepad
 
@@ -193,11 +222,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 android/          Android app (Kotlin, Jetpack Compose)
 pc-companion/     PC companion (C#, .NET 8)
   Core/           shared protocol, sessions, discovery, ADB
-  Windows/        WinForms app, ViGEmBus pad, SendInput keyboard
+  Windows/        WinForms app, ViGEmBus pad, SendInput keyboard, Lab screen
   Linux/          console app, uinput pad and keyboard
 switch-sysmodule/ Atmosphère sysmodule (C, libnx): virtual Pro Controller over Wi‑Fi
 ios/              iPhone/iPad app (SwiftUI), Wi‑Fi only
-docs/             Protocol specification and images
+labs/             Mobilepad Lab: spec, audit and results
+docs/             Protocol specification, images, Dolphin profiles
 tools/            Helper scripts
 ```
 
