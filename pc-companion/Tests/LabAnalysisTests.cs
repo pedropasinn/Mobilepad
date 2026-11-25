@@ -33,6 +33,7 @@ public class LabAnalysisTests
             run.Phone.Add(new LabRow(i, Stages.Send, cmdPc + PhoneAhead + 300_000, s));
             if (lost?.Invoke(i) == true) continue;
             run.Pc.Add(new LabRow(-1, Stages.Recv, cmdPc + 2_300_000, s));
+            run.Pc.Add(new LabRow(-1, Stages.SubmitStart, cmdPc + 2_310_000, s));
             run.Pc.Add(new LabRow(-1, Stages.Submit, cmdPc + 2_350_000, s));
             run.Obs.Add(new LabRow(-1, Stages.Obs, cmdPc + 3_350_000, s));
         }
@@ -67,7 +68,8 @@ public class LabAnalysisTests
         Assert.Equal(0.2, s.Stage("state→send")!.P50Ms, 3);
         Assert.Equal(2.0, s.Stage("send→recv")!.P50Ms, 3);
         Assert.Equal(0.05, s.Stage("recv→submit")!.P50Ms, 3);
-        Assert.Equal(1.0, s.Stage("submit→obs")!.P50Ms, 3);
+        Assert.Equal(0.04, s.Stage("submit_start→submit")!.P50Ms, 3);
+        Assert.Equal(1.04, s.Stage("submit_start→obs")!.P50Ms, 3);
         Assert.Equal(CmdToObsMs, s.Stage("cmd→obs")!.P50Ms, 3);
         Assert.Equal("estimated", s.Stage("cmd→obs")!.Kind);
         Assert.Equal("measured", s.Stage("recv→submit")!.Kind);

@@ -407,7 +407,13 @@ public sealed class MainForm : Form
         if (i + 3 < args.Length && int.TryParse(args[i + 3], out var n)) request.Count = n;
         Shown += async (_, _) =>
         {
-            await Task.Delay(4000); // let the phone reconnect to this companion
+            // Let the phone reconnect to this companion (USB/Wi-Fi), up to 30 s; then a little settle time.
+            for (int t = 0; t < 60 && request.Link != "bt"; t++)
+            {
+                if (request.Link == "usb" ? _server.Sessions.Any(x => x.IsUsb) : _server.Sessions.Any()) break;
+                await Task.Delay(500);
+            }
+            await Task.Delay(1500);
             OpenLab();
             _labForm!.AutoRun(request);
         };

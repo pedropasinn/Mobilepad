@@ -193,7 +193,12 @@ public sealed class PhoneSession : IDisposable
         LastInput = DateTime.Now;
         // Lab stages recv/submit (labs/SPEC.md): one volatile read when no lab run is active.
         if (Lab.LabLog.Active) Lab.LabLog.Record(Lab.LabLog.StageRecv, s);
-        lock (_pad) _pad.Update(s);
+        lock (_pad)
+        {
+            // submit_start: lock held, right before the driver call; submit = the call returned.
+            if (Lab.LabLog.Active) Lab.LabLog.Record(Lab.LabLog.StageSubmitStart, s);
+            _pad.Update(s);
+        }
         if (Lab.LabLog.Active) Lab.LabLog.Record(Lab.LabLog.StageSubmit, s);
     }
 

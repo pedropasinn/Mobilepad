@@ -38,7 +38,8 @@ public static class LabAnalysis
         (Stages.State, Stages.Send, false),
         (Stages.Send, Stages.Recv, true),
         (Stages.Recv, Stages.Submit, false),
-        (Stages.Submit, Stages.Obs, false),
+        (Stages.SubmitStart, Stages.Submit, false), // the driver call itself
+        (Stages.SubmitStart, Stages.Obs, false),    // driver call start → a game sees it (the update can be visible before the call returns)
         (Stages.Cmd, Stages.Obs, true),
     ];
 

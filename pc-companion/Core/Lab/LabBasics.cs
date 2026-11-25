@@ -88,10 +88,11 @@ public static class Stages
     public const string State = "state";
     public const string Send = "send";
     public const string Recv = "recv";
+    public const string SubmitStart = "submit_start";
     public const string Submit = "submit";
     public const string Obs = "obs";
 
-    public static readonly string[] Order = [Cmd, State, Send, Recv, Submit, Obs];
+    public static readonly string[] Order = [Cmd, State, Send, Recv, SubmitStart, Submit, Obs];
 }
 
 /// <summary>Test names accepted by the app's LabRunner (SPEC §4).</summary>

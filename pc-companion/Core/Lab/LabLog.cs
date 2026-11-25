@@ -13,6 +13,7 @@ public static class LabLog
 {
     public const byte StageRecv = 1;
     public const byte StageSubmit = 2;
+    public const byte StageSubmitStart = 3;
 
     private struct Entry
     {
@@ -89,7 +90,7 @@ public static class LabLog
         {
             ref var e = ref _buffer[i];
             if (e.TNs == 0) continue;
-            rows.Add(new LabRow(-1, e.Stage == StageRecv ? Stages.Recv : Stages.Submit, e.TNs, e.State));
+            rows.Add(new LabRow(-1, e.Stage switch { StageRecv => Stages.Recv, StageSubmitStart => Stages.SubmitStart, _ => Stages.Submit }, e.TNs, e.State));
         }
         List<LinkEvent> links;
         lock (Links) links = [.. Links];
