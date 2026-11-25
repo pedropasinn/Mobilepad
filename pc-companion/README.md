@@ -47,10 +47,10 @@ games are forwarded to the phone.
 
 ## Use
 
-- **Wi‑Fi**: phone and host on the same network; in the app use *Cerca*, scan the QR code or type
+- **Wi‑Fi**: phone and host on the same network; in the app use *Search*, scan the QR code or type
   `IP:47800`. Firewall: TCP 47800, UDP 47800 (states) and 47801 (discovery).
 - **USB**: enable USB debugging and plug the phone in; the companion keeps
-  `adb reverse tcp:47800 tcp:47800` in place by itself. In the app tap *Connetti via USB*.
+  `adb reverse tcp:47800 tcp:47800` in place by itself. In the app tap *Connect via USB*.
 
 ## Lab
 
@@ -59,3 +59,6 @@ parameters, press Run. ADB must reach the phone on every link (clock sync, trigg
 collection). Runs are saved under `%LOCALAPPDATA%\Mobilepad\lab\runs\` (`meta.json`, `phone.csv`,
 `pc.csv`, `obs.csv`, `res.csv`, `summary.json`); formats and stage names are in `labs/SPEC.md`.
 Outside a run the instrumentation costs one volatile read per state.
+
+Scripted runs: `MobilepadCompanion.exe --lab <test> <link> [count]` opens the Lab and runs one test
+(`latency`, `multi`, `analog`, `throughput`, `reliability`, `reconnect`; link `usb`, `wifi` or `bt`).
