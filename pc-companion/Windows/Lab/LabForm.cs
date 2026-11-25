@@ -99,7 +99,10 @@ public sealed class LabForm : Form
         Controls.AddRange([_count, _seed, _rate, _seconds, _run, _stop, _open, _copyJson, _export, _show, _compareButton, _refresh]);
 
         ApplyScale();
-        ClientSize = new Size(S(1240), S(820));
+        // Never larger than the screen's working area (laptops at 125% have only ~830 px of height).
+        var work = Screen.FromPoint(Cursor.Position).WorkingArea;
+        var frame = SizeFromClientSize(Size.Empty);
+        ClientSize = new Size(Math.Min(S(1240), work.Width - frame.Width - S(16)), Math.Min(S(820), work.Height - frame.Height - S(8)));
         StartPosition = FormStartPosition.CenterScreen;
 
         _link = _server.Sessions.Any(s => s.IsUsb) ? LabLinks.Usb : _server.Sessions.Any() ? LabLinks.Wifi : LabLinks.Usb;
@@ -145,7 +148,9 @@ public sealed class LabForm : Form
             b.Font = _pillFont;
             b.IconFont = _smallIconFont;
         }
-        MinimumSize = SizeFromClientSize(new Size(S(1000), S(680)));
+        var area = Screen.FromPoint(Cursor.Position).WorkingArea;
+        var min = SizeFromClientSize(new Size(S(900), S(600)));
+        MinimumSize = new Size(Math.Min(min.Width, area.Width), Math.Min(min.Height, area.Height));
     }
 
     protected override void OnHandleCreated(EventArgs e)
@@ -191,44 +196,37 @@ public sealed class LabForm : Form
     private void DoLayout()
     {
         if (_pillFont is null || ClientSize.Width <= 0 || ClientSize.Height <= 0) return;
-        int margin = S(24), gap = S(16), pad = S(20);
         var client = ClientSize;
+        // Compact spacing when the window is short, so the whole left card (up to the status message) fits.
+        float k = client.Height >= S(860) ? 1f : client.Height >= S(760) ? 0.8f : 0.62f;
+        int V(float v) => S(v * k);
+        int margin = S(24), gap = S(16), pad = V(20);
 
-        _headerTile = new Rectangle(margin, S(20), S(48), S(48));
-        var titleSize = Draw.Measure("Lab", _titleFont);
-        var subtitleSize = Draw.Measure("Companion", _subtitleFont);
-        int headerTextTop = _headerTile.Top + (_headerTile.Height - titleSize.Height - subtitleSize.Height) / 2;
-        _titleRect = new Rectangle(_headerTile.Right + S(14), headerTextTop, titleSize.Width + S(4), titleSize.Height);
-        _subtitleRect = new Rectangle(_titleRect.X + S(1), _titleRect.Bottom, S(520), subtitleSize.Height);
-        int pillHeight = S(38);
-        int pillWidth = S(42) + Draw.Measure(StatusText(), _pillFont).Width + S(16);
-        _pill = new Rectangle(client.Width - margin - pillWidth, _headerTile.Top + (_headerTile.Height - pillHeight) / 2, pillWidth, pillHeight);
-
-        int top = _headerTile.Bottom + S(22);
-        int bottom = client.Height - margin;
+        int top = V(18);
+        int bottom = client.Height - V(20);
 
         // ---- Left card: test, link, parameters, run, live ----
         _leftCard = new Rectangle(margin, top, S(340), bottom - top);
         int x = _leftCard.X + pad, inner = _leftCard.Width - 2 * pad, y = _leftCard.Y + pad;
         int capH = Draw.Measure("TEST", _captionFont).Height;
-        int chipH = S(32), chipGap = S(8);
+        int chipH = V(32) + (k < 1 ? S(4) : 0), chipGap = V(8);
         _testCaption = new Rectangle(x, y, inner, capH);
-        y += capH + S(10);
+        y += capH + V(10);
         int chipW = (inner - chipGap) / 2;
         for (int i = 0; i < 6; i++)
             _testChips[i] = new Rectangle(x + (i % 2) * (chipW + chipGap), y + (i / 2) * (chipH + chipGap), chipW, chipH);
-        y += 3 * chipH + 2 * chipGap + S(10);
+        y += 3 * chipH + 2 * chipGap + V(10);
         int descH = Draw.Measure("X\nX\nX", _smallFont).Height;
         _testDesc = new Rectangle(x, y, inner, descH);
-        y += descH + S(14);
+        y += descH + V(14);
         _linkCaption = new Rectangle(x, y, inner, capH);
-        y += capH + S(10);
+        y += capH + V(10);
         int linkW = (inner - 2 * chipGap) / 3;
         for (int i = 0; i < 3; i++) _linkChips[i] = new Rectangle(x + i * (linkW + chipGap), y, linkW, chipH);
-        y += chipH + S(18);
+        y += chipH + V(18);
         _paramCaption = new Rectangle(x, y, inner, capH);
-        y += capH + S(10);
-        int rowH = S(30), labelW = inner * 45 / 100;
+        y += capH + V(10);
+        int rowH = k < 1 ? S(28) : S(30), labelW = inner * 45 / 100;
         var boxes = new[] { _count, _seed, _rate, _seconds };
         for (int i = 0; i < 4; i++)
         {
@@ -236,23 +234,23 @@ public sealed class LabForm : Form
             _paramWells[i] = new Rectangle(x + labelW, y, inner - labelW, rowH);
             int boxH = boxes[i].PreferredHeight;
             boxes[i].Bounds = new Rectangle(_paramWells[i].X + S(10), _paramWells[i].Y + (rowH - boxH) / 2, _paramWells[i].Width - S(20), boxH);
-            y += rowH + S(8);
+            y += rowH + V(8);
         }
         int hintH = Draw.Measure("X", _smallFont).Height;
         _hintRect = new Rectangle(x, y, inner, hintH);
-        y += hintH + S(14);
-        int buttonH = S(34);
+        y += hintH + V(14);
+        int buttonH = k < 1 ? S(32) : S(34);
         foreach (var b in new[] { _run, _stop }) b.Height = buttonH;
         _stop.Width = _stop.PreferredWidth(buttonH);
         _run.Width = inner - _stop.Width - chipGap;
         _run.Location = new Point(x, y);
         _stop.Location = new Point(_run.Right + chipGap, y);
-        y += buttonH + S(16);
+        y += buttonH + V(16);
         _progressRect = new Rectangle(x, y, inner, S(8));
-        y += S(8) + S(10);
-        int lineH = Draw.Measure("X", _bodyFont).Height + S(5);
+        y += S(8) + V(10);
+        int lineH = Draw.Measure("X", _bodyFont).Height + V(5);
         _liveRect = new Rectangle(x, y, inner, lineH * 6);
-        y += lineH * 6 + S(8);
+        y += lineH * 6 + V(8);
         _messageRect = Rectangle.FromLTRB(x, y, x + inner, _leftCard.Bottom - pad);
 
         // ---- Right card: tabs + actions, content ----
@@ -263,6 +261,7 @@ public sealed class LabForm : Form
         int tabW2 = Draw.Measure(HistoryTab, _pillFont).Width + S(36);
         _tabResults = new Rectangle(_rightCard.X + pad, _rightCard.Y + pad, tabW1, tabH);
         _tabHistory = new Rectangle(_tabResults.Right + S(6), _tabResults.Y, tabW2, tabH);
+        _pill = new Rectangle(_tabHistory.Right + S(18), _tabResults.Y, S(30) + Draw.Measure(StatusText(), _bodyFont).Width, tabH);
         int bx = _rightCard.Right - pad;
         var actions = _view == View.Results ? new[] { _export, _copyJson, _open } : new[] { _refresh, _show, _compareButton };
         foreach (var b in new[] { _open, _copyJson, _export, _show, _compareButton, _refresh }) b.Visible = actions.Contains(b);
@@ -303,13 +302,9 @@ public sealed class LabForm : Form
         Draw.HighQuality(g);
         _hits.Clear();
 
-        Draw.IconTile(g, _headerTile, Theme.Violet, "", _iconFont);
-        Draw.Text(g, "Lab", _titleFont, _titleRect, Theme.Text, TextFormatFlags.SingleLine);
-        Draw.Text(g, T("Companion · misure riproducibili", "Companion · reproducible measurements", "伴侣程序 · 可复现的测量", "伴侶程式 · 可重現的量測", "コンパニオン · 再現可能な計測") + $" · {_version}",
-            _subtitleFont, _subtitleRect, Theme.Faint, TextFormatFlags.SingleLine);
-        Draw.Glass(g, _pill, _pill.Height / 2f);
-        Draw.Dot(g, new PointF(_pill.X + S(22), _pill.Y + _pill.Height / 2f), S(9), _engine.Running ? Theme.Accent : _adb.AdbPath is null ? Theme.Danger : Theme.Success);
-        Draw.Text(g, StatusText(), _pillFont, Rectangle.FromLTRB(_pill.X + S(40), _pill.Y, _pill.Right, _pill.Bottom), Theme.Text,
+        // No big header: the window title already says "Mobilepad Lab"; the status sits beside the tabs.
+        Draw.Dot(g, new PointF(_pill.X + S(8), _pill.Y + _pill.Height / 2f), S(9), _engine.Running ? Theme.Accent : _adb.AdbPath is null ? Theme.Danger : Theme.Success);
+        Draw.Text(g, StatusText(), _bodyFont, Rectangle.FromLTRB(_pill.X + S(22), _pill.Y, _pill.Right, _pill.Bottom), Theme.Muted,
             TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
 
         PaintLeft(g);

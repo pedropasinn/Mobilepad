@@ -183,7 +183,8 @@ internal static class LabCharts
             Empty(g, plot, small);
             return;
         }
-        int labelW = (int)(84 * scale);
+        // Wide enough for the longest stage name (e.g. "submit_start→submit").
+        int labelW = Math.Max((int)(84 * scale), stages.Max(s => Draw.Measure(s.Name, small).Width) + (int)(10 * scale));
         int valueW = (int)(64 * scale);
         var area = Rectangle.FromLTRB(plot.X - (int)(32 * scale) + labelW, plot.Y, plot.Right - valueW, plot.Bottom + Draw.Measure("0", small).Height);
         double max = Math.Max(1e-3, stages.Max(s => s.P99Ms));

@@ -401,6 +401,7 @@ public sealed class MainForm : Form
     // --lab <test> <link> [count]: opens the Lab and runs one test (used for scripted batteries).
     private void AutoLab(string[] args)
     {
+        if (args.Contains("--show-lab")) Shown += (_, _) => OpenLab();
         var i = Array.IndexOf(args, "--lab");
         if (i < 0 || i + 2 >= args.Length) return;
         var request = new Mobilepad.Companion.Lab.LabRequest { Test = args[i + 1], Link = args[i + 2] };
