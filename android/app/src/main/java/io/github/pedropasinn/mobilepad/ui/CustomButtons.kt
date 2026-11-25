@@ -42,6 +42,29 @@ enum class CustomOut(val label: String, val mask: Int = 0, val trigger: Int = 0)
 }
 
 /**
+ * The output as printed on the controller in use: what is sent never changes (positions, like the
+ * pad), only the name, so with Nintendo names the south button reads "B" here too.
+ */
+fun CustomOut.shown(names: ButtonNames): String = when (names) {
+    ButtonNames.NINTENDO -> when (this) {
+        CustomOut.A -> "B"; CustomOut.B -> "A"; CustomOut.X -> "Y"; CustomOut.Y -> "X"
+        CustomOut.LB -> "L"; CustomOut.RB -> "R"; CustomOut.LT -> "ZL"; CustomOut.RT -> "ZR"
+        CustomOut.BACK -> "−"; CustomOut.START -> "+"
+        else -> label
+    }
+    ButtonNames.PLAYSTATION -> when (this) {
+        CustomOut.A -> "✕"; CustomOut.B -> "○"; CustomOut.X -> "□"; CustomOut.Y -> "△"
+        CustomOut.LB -> "L1"; CustomOut.RB -> "R1"; CustomOut.LT -> "L2"; CustomOut.RT -> "R2"
+        CustomOut.BACK -> "Share"; CustomOut.START -> "Options"
+        else -> label
+    }
+    else -> when (this) {
+        CustomOut.BACK -> "View"; CustomOut.START -> "Menu"
+        else -> label
+    }
+}
+
+/**
  * A button the user adds to a layout: a name printed on it, what it presses, where its centre is
  * (fractions of the controller's area, so it fits any screen), its diameter, and whether a press
  * latches it (pressed once it stays held until pressed again, e.g. the accelerator).

@@ -303,12 +303,12 @@ private fun CustomButtonRow(b: CustomButton, onChange: (CustomButton) -> Unit, o
         }
         Box {
             OutlinedButton(onClick = { outOpen = true }, contentPadding = PaddingValues(horizontal = 12.dp)) {
-                Text(str(R.string.custom_presses, b.out.label), fontFamily = Rounded, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(str(R.string.custom_presses, b.out.shown(ActiveButtonNames.value)), fontFamily = Rounded, fontWeight = FontWeight.Bold, maxLines = 1)
             }
             androidx.compose.material3.DropdownMenu(outOpen, { outOpen = false }, containerColor = Color(0xFF221E2E)) {
                 CustomOut.entries.forEach { o ->
                     androidx.compose.material3.DropdownMenuItem(
-                        text = { Text(o.label, color = if (o == b.out) AccentBright else p.text, fontFamily = Rounded, fontWeight = FontWeight.Bold) },
+                        text = { Text(o.shown(ActiveButtonNames.value), color = if (o == b.out) AccentBright else p.text, fontFamily = Rounded, fontWeight = FontWeight.Bold) },
                         onClick = { onChange(b.copy(out = o)); outOpen = false },
                     )
                 }
