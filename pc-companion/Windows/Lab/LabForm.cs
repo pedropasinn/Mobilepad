@@ -914,10 +914,22 @@ public sealed class LabForm : Form
         return true;
     }
 
-    private async void StartRun()
+    public void AutoRun(LabRequest request)
+    {
+        _test = request.Test;
+        _link = request.Link;
+        ApplyTestParams();
+        StartRun(request);
+    }
+
+    private void StartRun() => StartRun(null);
+
+    private async void StartRun(LabRequest? preset)
     {
         if (_engine.Running) return;
-        if (!TryReadRequest(out var request, out var error))
+        LabRequest request;
+        if (preset is not null) request = preset;
+        else if (!TryReadRequest(out request, out var error))
         {
             SetMessage(error, true);
             return;

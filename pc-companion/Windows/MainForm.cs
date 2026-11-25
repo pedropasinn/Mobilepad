@@ -44,10 +44,11 @@ public sealed class MainForm : Form
     private readonly List<Rectangle> _rows = [];
     private Rectangle _logCard, _logTile, _logCaption, _logWell;
 
-    public MainForm(CompanionServer server, AdbBridge adb)
+    public MainForm(CompanionServer server, AdbBridge adb, string[]? args = null)
     {
         _server = server;
         _adb = adb;
+        if (args is not null) AutoLab(args);
         _addresses = CompanionServer.LocalAddresses();
         _qr = QrImage($"mobilepad://connect?c={string.Join("_", _addresses)}_{server.Port}");
 
@@ -395,6 +396,21 @@ public sealed class MainForm : Form
         DoLayout();
         _copiedTimer.Stop();
         _copiedTimer.Start();
+    }
+
+    // --lab <test> <link> [count]: opens the Lab and runs one test (used for scripted batteries).
+    private void AutoLab(string[] args)
+    {
+        var i = Array.IndexOf(args, "--lab");
+        if (i < 0 || i + 2 >= args.Length) return;
+        var request = new Mobilepad.Companion.Lab.LabRequest { Test = args[i + 1], Link = args[i + 2] };
+        if (i + 3 < args.Length && int.TryParse(args[i + 3], out var n)) request.Count = n;
+        Shown += async (_, _) =>
+        {
+            await Task.Delay(4000); // let the phone reconnect to this companion
+            OpenLab();
+            _labForm!.AutoRun(request);
+        };
     }
 
     private void OpenLab()

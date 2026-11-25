@@ -6,7 +6,7 @@ namespace Mobilepad.Companion;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
 
@@ -30,7 +30,7 @@ internal static class Program
         using (var server = new CompanionServer(new WindowsPlatform(vigem)))
         using (var adb = new AdbBridge(server.Port, () => server.Sessions.Any(s => s.IsUsb)))
         {
-            Application.Run(new MainForm(server, adb));
+            Application.Run(new MainForm(server, adb, args));
         }
     }
 }
