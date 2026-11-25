@@ -90,7 +90,7 @@ const val LATCH_HOLD_MS = 250L
  * shows a lit ring while it holds its output.
  */
 @Composable
-fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput, w: Dp, h: Dp, onSwap: () -> Unit = {}) {
+fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput, w: Dp, h: Dp, enabled: Boolean = true, onSwap: () -> Unit = {}) {
     val latched = remember { mutableStateMapOf<String, Boolean>() }
     // Per button: the timer that latches it while held, and whether this press only released it.
     val timers = remember { mutableMapOf<String, Job>() }
@@ -102,7 +102,12 @@ fun BoxScope.CustomButtonsLayer(buttons: List<CustomButton>, input: GamepadInput
         PadButton(
             b.label,
             { down ->
-                if (b.out.isSwap) {
+                // While the layout is being edited a touch only selects and moves: no press, and
+                // above all no layout swap in the middle of an edit (it moved the edits to the
+                // other layout).
+                if (!enabled) {
+                    Unit
+                } else if (b.out.isSwap) {
                     if (down) {
                         // Leaving this layout: let go of anything it latched.
                         buttons.filter { latched[it.id] == true }.forEach { it.out.press(input, false) }

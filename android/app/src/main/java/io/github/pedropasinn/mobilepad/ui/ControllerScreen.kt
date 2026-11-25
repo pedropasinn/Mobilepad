@@ -203,7 +203,7 @@ fun ControllerScreen(
                 } else {
                     LandscapeLayout(input, labels, maxHeight, menuBlock, ::button)
                 }
-                CustomButtonsLayer(layoutScope.layout.buttons, input, maxWidth, maxHeight, onSwap = { onSwapLayout?.invoke() })
+                CustomButtonsLayer(layoutScope.layout.buttons, input, maxWidth, maxHeight, enabled = !editingLayout, onSwap = { onSwapLayout?.invoke() })
             }
 
             if (editingLayout) {
