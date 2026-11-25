@@ -7,6 +7,7 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -98,19 +99,36 @@ class WifiConnection(private val deviceId: Long) {
         lastTarget = target
         session = scope.launch {
             val label = target.toString()
-            _status.value = ConnectionStatus.Connecting(label)
-            var lastError = str(R.string.no_address)
-            for (host in target.hosts) {
-                try {
-                    runSession(host, target, label)
-                    return@launch
-                } catch (e: IOException) {
-                    lastError = "$host: ${e.message ?: e.javaClass.simpleName}"
-                    Log.w(TAG, "connection to $host failed", e)
-                    closeSockets()
+            // A link that was up and then dropped (companion restarted, cable re-plugged, Wi-Fi
+            // blip) reconnects by itself until the user disconnects; a first attempt that fails
+            // still reports the error, as before.
+            var wasConnected = false
+            var retry = 0
+            while (isActive) {
+                _status.value = ConnectionStatus.Connecting(label)
+                var lastError = str(R.string.no_address)
+                var ended = false
+                for (host in target.hosts) {
+                    try {
+                        runSession(host, target, label)
+                        ended = true // the session ran and has now ended: the link dropped
+                        break
+                    } catch (e: IOException) {
+                        lastError = "$host: ${e.message ?: e.javaClass.simpleName}"
+                        Log.w(TAG, "connection to $host failed", e)
+                        closeSockets()
+                    }
                 }
+                if (ended) { wasConnected = true; retry = 0 }
+                if (!wasConnected) {
+                    _status.value = ConnectionStatus.Failed(lastError)
+                    return@launch
+                }
+                closeSockets()
+                retry++
+                delay(if (retry <= 10) RECONNECT_FAST_MS else RECONNECT_SLOW_MS)
+                Log.i(TAG, "reconnecting to $label (attempt $retry)")
             }
-            _status.value = ConnectionStatus.Failed(lastError)
         }
     }
 
@@ -334,6 +352,8 @@ class WifiConnection(private val deviceId: Long) {
         private const val TAG = "WifiConnection"
         private const val CONNECT_TIMEOUT_MS = 4000
         private const val HANDSHAKE_TIMEOUT_MS = 5000
+        const val RECONNECT_FAST_MS = 1_000L
+        const val RECONNECT_SLOW_MS = 3_000L
         private const val KEEPALIVE_MS = 200L
     }
 }
