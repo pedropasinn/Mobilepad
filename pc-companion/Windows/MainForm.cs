@@ -406,6 +406,7 @@ public sealed class MainForm : Form
         if (i < 0 || i + 2 >= args.Length) return;
         var request = new Mobilepad.Companion.Lab.LabRequest { Test = args[i + 1], Link = args[i + 2] };
         if (i + 3 < args.Length && int.TryParse(args[i + 3], out var n)) request.Count = n;
+        if (args.Contains("--no-phone-res")) request.PhoneResources = false;
         Shown += async (_, _) =>
         {
             // Let the phone reconnect to this companion (USB/Wi-Fi), up to 30 s; then a little settle time.

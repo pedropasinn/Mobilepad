@@ -14,6 +14,8 @@ public sealed class LabRequest
     public long? Seed { get; set; }
     public int? RateHz { get; set; }
     public int? Seconds { get; set; }
+    /// <summary>Poll the phone's battery over adb every 2 s (adds adb traffic during the run).</summary>
+    public bool PhoneResources { get; set; } = true;
     /// <summary>adb serial; null = the first phone in "adb devices".</summary>
     public string? Serial { get; set; }
 }
@@ -175,7 +177,7 @@ public sealed class LabEngine(LabHost host)
                 : Math.Clamp(steps * 6 + 20000, 65536, 2_000_000);
             observer = host.CreateObserver?.Invoke(request.Link, mark);
             observer?.Start(capacity);
-            sampler = new ResourceSampler(adb);
+            sampler = new ResourceSampler(request.PhoneResources ? adb : null);
             sampler.Start();
             LabLog.Start(capacity);
             long startedNs = LabTime.NowNs();
