@@ -229,6 +229,10 @@ Where the time goes (medians):
 - **Bluetooth**: about 60% of presses arrive in 2–8 ms; the rest wait for the next radio window
   when the link has been idle (Bluetooth power saving), up to ~25 ms. Turning the phone's Wi‑Fi off
   made no difference.
+- **Bluetooth with a moving stick**: the radio delivers about 100 reports per second. Sending every
+  touch update (~250/s) used to queue them, and while steering the delay grew to 200–290 ms (P95–P99).
+  The app now sends the newest state at most every 12 ms: P95 ~35 ms, P99 ~55–65 ms in the same test,
+  and a press after a quiet moment still leaves at once.
 - For reference, one frame at 60 fps is 16.7 ms.
 
 ## Compatibility with Remote Gamepad
